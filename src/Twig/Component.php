@@ -11,7 +11,11 @@ abstract class Component
 {
     public static function getComponentName(): string
     {
-        return s((new \ReflectionClass(static::class))->getShortName())->snake();
+        return s((new \ReflectionClass(static::class))->getShortName())
+            ->snake()
+            ->ensureEnd('_component')
+            ->before('_component')
+        ;
     }
 
     public static function getComponentTemplate(): string
