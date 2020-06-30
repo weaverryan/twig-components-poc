@@ -26,7 +26,7 @@ final class ComponentTokenParser extends IncludeTokenParser
     {
         $stream = $this->parser->getStream();
         $parent = $this->parser->getExpressionParser()->parseExpression();
-        $component = clone $this->getComponent($parent);
+        $component = $this->getComponent($parent);
 
         list($variables, $only) = $this->parseArguments();
 

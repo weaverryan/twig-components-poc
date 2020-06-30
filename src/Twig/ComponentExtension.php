@@ -5,6 +5,7 @@ namespace App\Twig;
 use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -31,7 +32,8 @@ final class ComponentExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('attributes', [self::class, 'renderAttributes'], ['needs_context' => true, 'is_safe' => ['html']]),
+            new TwigFunction('component', [$this, 'renderComponent'], ['needs_environment' => true, 'needs_context' => true, 'is_safe' => ['all']]),
+            new TwigFunction('attributes', [self::class, 'renderAttributes'], ['needs_context' => true, 'is_safe' => ['all']]),
         ];
     }
 
@@ -45,6 +47,13 @@ final class ComponentExtension extends AbstractExtension
             'this' => $component,
             self::ATTRIBUTES_KEY => new AttributeBag($with),
         ]);
+    }
+
+    public function renderComponent(Environment $env, array $context, string $name, array $with = [], bool $withContext = true): string
+    {
+        $context = $this->getComponentContext($name, $with, $withContext ? $context : []);
+
+        return $env->resolveTemplate($context['this']::getComponentTemplate())->render($context);
     }
 
     public static function renderAttributes(array $context, array $with = []): string

@@ -18,5 +18,11 @@
         {% block th %}<em>{{ parent() }}</em>{% endblock %}
         {% block td %}cell: {{ parent() }}{% endblock %}
     {% endcomponent %}
+
+    {{ component('input', { label: 'Input 1' }) }}
+    {{ component('input', { label: 'Input 2', type: 'email' }) }}
+    {{ component('input', { label: 'Input 3', value: 'default' }) }}
+    {{ component('input', { label: 'Input 4', errors: ['some error', 'another error'] }) }}
+    {{ component('input', { label: 'Input 5', errors: 'error' }) }}
 </div>
 {% endblock %}

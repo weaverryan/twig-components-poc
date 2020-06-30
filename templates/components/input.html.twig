@@ -1,0 +1,13 @@
+<div>
+    <label>
+        {{ this.label }}
+        <input type="{{ this.type }}" value="{{ this.value }}" />
+        {% if this.errors|length %}
+            <ul>
+                {% for error in this.errors %}
+                    <li style="color:red;">{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </label>
+</div>
