@@ -1,0 +1,5 @@
+{% autoescape false %}
+<div{{ attributes.merge({ class: 'alert alert-'~this.type }) }}>
+    message
+</div>
+{% endautoescape %}

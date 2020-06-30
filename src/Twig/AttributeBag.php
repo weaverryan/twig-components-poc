@@ -9,6 +9,9 @@ final class AttributeBag
 {
     private array $attributes;
 
+    /**
+     * @param array<string, string> $attributes
+     */
     public function __construct(array $attributes)
     {
         $this->attributes = $attributes;
@@ -16,11 +19,24 @@ final class AttributeBag
 
     public function __toString(): string
     {
-        // todo
+        $ret = '';
+
+        foreach ($this->attributes as $key => $value) {
+            $ret .= " {$key}=\"{$value}\"";
+        }
+
+        return $ret;
     }
 
+    /**
+     * @param array<string, string> $with
+     */
     public function merge(array $with): self
     {
-        // todo deep merge...
+        foreach ($this->attributes as $key => $value) {
+            $with[$key] = isset($with[$key]) ? "{$with[$key]} {$value}" : $value;
+        }
+
+        return new self($with);
     }
 }

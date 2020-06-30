@@ -31,4 +31,4 @@ services:
     # please note that last definitions always *replace* previous ones
 
     App\Twig\ComponentRegistry:
-        $components: !tagged_locator { tag: twig.component, index_by: name, default_index_method: getName }
+        $components: !tagged_locator { tag: twig.component, index_by: name, default_index_method: getComponentName }

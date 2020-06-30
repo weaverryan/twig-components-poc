@@ -33,7 +33,7 @@ final class ComponentRegistry
 
         self::addContextToComponent($component, $context);
 
-        return $this->twig->render($component::getTemplateName(), [
+        return $this->twig->render($component::getComponentTemplate(), [
             'this' => $component,
             'attributes' => new AttributeBag($context),
 //            'slots' => todo

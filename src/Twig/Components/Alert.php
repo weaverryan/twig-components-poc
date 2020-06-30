@@ -9,4 +9,5 @@ use App\Twig\Component;
  */
 final class Alert extends Component
 {
+    public ?string $type = null;
 }

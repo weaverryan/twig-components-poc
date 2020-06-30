@@ -9,13 +9,13 @@ use function Symfony\Component\String\s;
  */
 abstract class Component
 {
-    public static function getName(): string
+    public static function getComponentName(): string
     {
         return s((new \ReflectionClass(static::class))->getShortName())->snake();
     }
 
-    public static function getTemplateName(): string
+    public static function getComponentTemplate(): string
     {
-        return \sprintf('components/%s.html.twig', static::getName());
+        return \sprintf('components/%s.html.twig', static::getComponentName());
     }
 }
