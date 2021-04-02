@@ -15,9 +15,13 @@ export default class extends Controller {
 
         const params = new URLSearchParams({
             component: this.componentValue,
-            state: this.stateValue,
-            model,
-            value: event.currentTarget.value
+            action: 'updateModel',
+            state: new URLSearchParams(this.stateValue).toString(),
+            // these is extra data that will be available as controller args
+            values: new URLSearchParams({
+                model,
+                value: event.currentTarget.value
+            }).toString()
         });
 
         // need to think about the URL structure... I really had this RPC stuff
