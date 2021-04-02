@@ -65,7 +65,7 @@ final class ComponentExtension extends AbstractExtension
         return $context[self::ATTRIBUTES_KEY]->merge($with);
     }
 
-    private static function addContextToComponent(Component $component, array &$context): void
+    public static function addContextToComponent(Component $component, array &$context): void
     {
         foreach ($context as $property => $value) {
             try {

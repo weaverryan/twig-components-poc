@@ -6,7 +6,7 @@
     {# This outer element would normally be rendered automatically #}
     <div
         data-controller="live"
-        data-live-component-value="comment"
+        data-live-component-value="{{ componentName }}"
         data-live-state-value="{{ initialData|serialize('json') }}"
     >
         <textarea

@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Twig\Component;
+use App\Twig\ComponentExtension;
+use App\Twig\ComponentRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -20,23 +23,27 @@ class MainController extends AbstractController
     /**
      * @Route("/live", name="live")
      */
-    public function live()
+    public function live(ComponentRegistry $componentRegistry)
     {
-        // this endpoint mimics what a component would render
-
-        // a component object would normally be turned into an array
-        // by the component system. Done here manually to focus on
-        // the "live" part of the component system
-        $data = [
+        // this endpoint mimics what a component would render in "live" mode
+        $initialData = [
             'message' => 'starting message'
         ];
+        /** @var Component $component */
+        $component = $componentRegistry->get('comment');
+        ComponentExtension::addContextToComponent($component, $initialData);
+
+        // cheap way to convert public properties into an array
+        // TODO - a transformer system to convert, for example,
+        // entities to "id" and dates to  a string
+        $data = get_object_vars($component);
 
         return $this->render(
             'main/live.html.twig',
             // this initial data part would normally be handled by the
             // component, taking the component object and turning it into
             // an array. The important part is how it is passed into Stimulus
-            $data + ['initialData' => $data ]
+            $data + ['initialData' => $data, 'componentName' => $component::getComponentName() ]
         );
     }
 }
