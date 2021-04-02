@@ -9,6 +9,12 @@ use function Symfony\Component\String\s;
  */
 abstract class Component
 {
+    public function updateModel(string $model, $value)
+    {
+        // simply way to just... update a property
+        $this->$model = $value;
+    }
+
     public static function getComponentName(): string
     {
         return s((new \ReflectionClass(static::class))->getShortName())
