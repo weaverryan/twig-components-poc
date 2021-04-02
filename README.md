@@ -27,3 +27,14 @@ not in a block to be part of the "default slot" (like Vue or [Blade Components](
 2. `LiveComponent` base class to provide Laravel Livewire-like interactions
 3. `make:component` (`make:component --live`)
 4. "Anonymous" components (just a template) to take advantage of the `attributes()` system
+
+# Live Details
+
+1. Setup with:
+
+```
+yarn install
+yarn watch
+```
+
+2. Go to `/live` and start typing!
