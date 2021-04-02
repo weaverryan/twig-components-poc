@@ -27,7 +27,7 @@ class MainController extends AbstractController
     {
         // this endpoint mimics what a component would render in "live" mode
         $initialData = [
-            'message' => 'starting message'
+            'message' => 'Btw, you can use *markdown* here.'
         ];
         /** @var Component $component */
         $component = $componentRegistry->get('comment');
@@ -43,7 +43,11 @@ class MainController extends AbstractController
             // this initial data part would normally be handled by the
             // component, taking the component object and turning it into
             // an array. The important part is how it is passed into Stimulus
-            $data + ['initialData' => $data, 'componentName' => $component::getComponentName() ]
+            [
+                'initialData' => $data,
+                'component' => $component,
+                'componentName' => $component::getComponentName(),
+            ]
         );
     }
 }

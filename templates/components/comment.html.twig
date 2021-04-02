@@ -1,0 +1,33 @@
+<textarea
+    data-model="message"
+    {#
+        This triggers the "on input" behavior. In theory,
+        we could try to make this happen automatically, without
+        the user needing to do it. It's added here now for simplicity.
+        And also, it gives the user full control over which event
+        should be used to update it (e.g. "input", "change", "blur")
+    #}
+    data-action="live#update"
+    style="width: 400px; height: 200px;"
+>{{ this.message }}</textarea>
+
+<div>
+    {{ this.message|markdown }}
+</div>
+
+<button
+    data-action="live#action"
+    data-action-name="save"
+    {#
+        This shows off how you can pass extra "arguments" to an action.
+        But, the arguments are "named". So this would allow you to have
+        an extra isImportant argument. The syntax here is terrible,
+        but I haven't really thought yet about potential Twig functions
+        that could be used ot make this better - e.g.
+            {{ live_action('save', { isImportant : true } }}
+        which could add all 3 attributes.
+    #}
+    data-action-values="{{ ({ isImportant: true })|serialize('json') }}"
+>
+    Save!
+</button>

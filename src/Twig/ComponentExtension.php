@@ -33,6 +33,7 @@ final class ComponentExtension extends AbstractExtension
     {
         return [
             new TwigFunction('component', [$this, 'renderComponent'], ['needs_environment' => true, 'needs_context' => true, 'is_safe' => ['all']]),
+            new TwigFunction('componentObject', [$this, 'renderComponentObject'], ['needs_environment' => true, 'is_safe' => ['all']]),
             new TwigFunction('attributes', [self::class, 'renderAttributes'], ['needs_context' => true, 'is_safe' => ['all']]),
         ];
     }
@@ -52,6 +53,19 @@ final class ComponentExtension extends AbstractExtension
     public function renderComponent(Environment $env, array $context, string $name, array $with = [], bool $withContext = true): string
     {
         $context = $this->getComponentContext($name, $with, $withContext ? $context : []);
+
+        return $env->resolveTemplate($context['this']::getComponentTemplate())->render($context);
+    }
+
+    public function renderComponentObject(Environment $env,  $component): string
+    {
+        $context = [];
+        self::addContextToComponent($component, $context);
+
+        $context = [
+            'this' => $component,
+            self::ATTRIBUTES_KEY => new AttributeBag([]),
+        ];
 
         return $env->resolveTemplate($context['this']::getComponentTemplate())->render($context);
     }
