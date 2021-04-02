@@ -1,4 +1,5 @@
 import { Controller } from 'stimulus';
+import morphdom from 'morphdom';
 
 export default class extends Controller {
     static values = {
@@ -28,9 +29,10 @@ export default class extends Controller {
         const response = await fetch(`/components?${params.toString()}`);
         const data = await response.json();
 
-        // TODO - diff the HTML
         // "html" is the key on the JSON where the HTML is stored
-        this.element.innerHTML = data.html;
+        const newElement = this.element.cloneNode();
+        newElement.innerHTML = data.html;
+        morphdom(this.element, newElement);
         // "state" holds the new, updated state
         this.stateValue = data.state;
     }
