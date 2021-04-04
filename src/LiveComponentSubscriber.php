@@ -37,21 +37,28 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         // which could transform ids back to entities or date strings to objects
         // parse_str reads in a query param format... need to think about the
         // way that data is passed in the URL, etc
-        parse_str($request->query->get('state'), $initialState);
-        // extra variables to be made available to the controller
-        parse_str($request->query->get('values'), $values);
+        parse_str($request->query->get('data'), $initialData);
 
         $component = $this->componentRegistry
             ->get($request->query->get('component'));
-        ComponentExtension::addContextToComponent($component, $initialState);
+        ComponentExtension::addContextToComponent($component, $initialData);
+
+        // extra variables to be made available to the controller
+        // (for "actions" only)
+        parse_str($request->query->get('values'), $values);
+        $request->attributes->add($values);
 
         $action = $request->query->get('action');
+        // the default "action" is get, which does nothing
+        if (!$action) {
+            $action = 'get';
+        }
+
         $request->attributes->set(
             '_controller',
             [$component, $action]
         );
         $request->attributes->set('_component', $component);
-        $request->attributes->add($values);
     }
 
     public function onKernelResponse(ResponseEvent $event)
@@ -67,7 +74,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         $component = $request->attributes->get('_component');
 
         // see MainController where we also do this silliness,
-        $newState = get_object_vars($component);
+        $newData = get_object_vars($component);
         $html = $this->componentExtension->renderComponentObject(
             $this->twigEnvironment,
             $component
@@ -75,7 +82,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
 
         $response = new JsonResponse([
             'html' => $html,
-            'state' => $newState,
+            'data' => $newData,
         ]);
         $event->setResponse($response);
     }

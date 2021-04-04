@@ -4,7 +4,7 @@ import morphdom from 'morphdom';
 export default class extends Controller {
     static values = {
         component: String,
-        state: Object,
+        data: Object,
     }
 
     /**
@@ -14,15 +14,15 @@ export default class extends Controller {
         const model = event.currentTarget.dataset.model;
         // todo - handle modifiers like "defer"
 
+        // we do not send old and new data to the server
+        // we merge in the new data now,
+        this.dataValue = { ...this.dataValue, [model]: event.currentTarget.value}
+
         const params = new URLSearchParams({
             component: this.componentValue,
-            action: 'updateModel',
-            state: new URLSearchParams(this.stateValue).toString(),
-            // these is extra data that will be available as controller args
-            values: new URLSearchParams({
-                model,
-                value: event.currentTarget.value
-            }).toString()
+            // no "action" here: we are only rendering the model with
+            // the given data
+            data: new URLSearchParams(this.dataValue).toString(),
         });
 
         // need to think about the URL structure... I really had this RPC stuff
@@ -33,8 +33,8 @@ export default class extends Controller {
         const newElement = this.element.cloneNode();
         newElement.innerHTML = data.html;
         morphdom(this.element, newElement);
-        // "state" holds the new, updated state
-        this.stateValue = data.state;
+        // "data" holds the new, updated data
+        this.dataValue = data.data;
     }
 
     action(event) {

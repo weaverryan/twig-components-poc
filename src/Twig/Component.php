@@ -9,10 +9,11 @@ use function Symfony\Component\String\s;
  */
 abstract class Component
 {
-    public function updateModel(string $model, $value)
+    public function get()
     {
-        // simply way to just... update a property
-        $this->$model = $value;
+        // noop
+        // this is the action that's called when we are simply
+        // rendering the component (this is not an action)
     }
 
     public static function getComponentName(): string
