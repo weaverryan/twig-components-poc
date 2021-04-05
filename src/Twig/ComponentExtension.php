@@ -24,11 +24,6 @@ final class ComponentExtension extends AbstractExtension
         $this->registry = $registry;
     }
 
-    public function getTokenParsers(): array
-    {
-        return [new ComponentTokenParser($this->registry)];
-    }
-
     public function getFunctions(): array
     {
         return [
