@@ -2,8 +2,7 @@
 
 namespace App\Twig;
 
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Twig\Environment;
 use function Symfony\Component\String\s;
 
 /**
@@ -11,22 +10,17 @@ use function Symfony\Component\String\s;
  */
 abstract class Component
 {
-    private static ?PropertyAccessor $propertyAccessor = null;
-
     /**
-     * todo should this be offloaded to a service? should/can the serializer be used?
-     *
-     * @return static
+     * Override if creating "inline" component and just return html.
      */
-    final public function injectContext(array $context): self
+    public function render(Environment $twig): string
     {
-        foreach ($context as $property => $value) {
-            self::propertyAccessor()->setValue($this, $property, $value);
-        }
-
-        return $this;
+        return $twig->render($this->getComponentTemplate(), ['this' => $this]);
     }
 
+    /**
+     * Override to customize component name.
+     */
     public static function getComponentName(): string
     {
         return s((new \ReflectionClass(static::class))->getShortName())
@@ -36,13 +30,11 @@ abstract class Component
         ;
     }
 
-    public static function getComponentTemplate(): string
+    /**
+     * Override to customize component template.
+     */
+    public function getComponentTemplate(): string
     {
         return \sprintf('components/%s.html.twig', static::getComponentName());
-    }
-
-    private static function propertyAccessor(): PropertyAccessor
-    {
-        return self::$propertyAccessor ?: self::$propertyAccessor = PropertyAccess::createPropertyAccessor();
     }
 }
