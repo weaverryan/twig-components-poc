@@ -2,7 +2,7 @@
     <label>
         {{ this.label }}
         <input type="{{ this.type }}" value="{{ this.value }}" />
-        {% if this.errors|length %}
+        {% if this.hasErrors %}
             <ul>
                 {% for error in this.errors %}
                     <li style="color:red;">{{ error }}</li>
