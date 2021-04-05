@@ -28,7 +28,6 @@ final class ComponentExtension extends AbstractExtension
     {
         return [
             new TwigFunction('component', [$this, 'renderComponent'], ['needs_environment' => true, 'needs_context' => true, 'is_safe' => ['all']]),
-            new TwigFunction('attributes', [self::class, 'renderAttributes'], ['needs_context' => true, 'is_safe' => ['all']]),
         ];
     }
 
@@ -38,10 +37,7 @@ final class ComponentExtension extends AbstractExtension
 
         self::addContextToComponent($component, $with);
 
-        return \array_merge($context, [
-            'this' => $component,
-            self::ATTRIBUTES_KEY => new AttributeBag($with),
-        ]);
+        return \array_merge($context, ['this' => $component]);
     }
 
     public function renderComponent(Environment $env, array $context, string $name, array $with = [], bool $withContext = true): string
@@ -49,15 +45,6 @@ final class ComponentExtension extends AbstractExtension
         $context = $this->getComponentContext($name, $with, $withContext ? $context : []);
 
         return $env->resolveTemplate($context['this']::getComponentTemplate())->render($context);
-    }
-
-    public static function renderAttributes(array $context, array $with = []): string
-    {
-        if (!isset($context[self::ATTRIBUTES_KEY])) {
-            throw new \RuntimeException('Cannot use attributes function outside of component scope.');
-        }
-
-        return $context[self::ATTRIBUTES_KEY]->merge($with);
     }
 
     private static function addContextToComponent(Component $component, array &$context): void
