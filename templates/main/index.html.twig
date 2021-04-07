@@ -4,21 +4,6 @@
 
 {% block body %}
 <div class="example-wrapper">
-    {% component alert with { type: 'error', class: 'mt-2'} %}
-        {% block default %}{{ parent() }} message!{% endblock %}
-    {% endcomponent %}
-
-    {% component dialog %}
-        {% block header %}My Header{% endblock %}
-        {% block body %}<p>My Body</p>{% endblock %}
-        {% block footer %}My Footer{% endblock %}
-    {% endcomponent %}
-
-    {% component data_table with { caption: 'My Table' } only %}
-        {% block th %}<em>{{ parent() }}</em>{% endblock %}
-        {% block td %}cell: {{ parent() }}{% endblock %}
-    {% endcomponent %}
-
     {{ component('input', { label: 'Input 1' }) }}
     {{ component('input', { label: 'Input 2', type: 'email' }) }}
     {{ component('input', { label: 'Input 3', value: 'default' }) }}

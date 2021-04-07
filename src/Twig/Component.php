@@ -2,6 +2,7 @@
 
 namespace App\Twig;
 
+use Twig\Environment;
 use function Symfony\Component\String\s;
 
 /**
@@ -9,6 +10,17 @@ use function Symfony\Component\String\s;
  */
 abstract class Component
 {
+    /**
+     * Override if creating "inline" component and just return html.
+     */
+    public function render(Environment $twig): string
+    {
+        return $twig->render($this->getComponentTemplate(), ['this' => $this]);
+    }
+
+    /**
+     * Override to customize component name.
+     */
     public static function getComponentName(): string
     {
         return s((new \ReflectionClass(static::class))->getShortName())
@@ -18,7 +30,10 @@ abstract class Component
         ;
     }
 
-    public static function getComponentTemplate(): string
+    /**
+     * Override to customize component template.
+     */
+    public function getComponentTemplate(): string
     {
         return \sprintf('components/%s.html.twig', static::getComponentName());
     }
