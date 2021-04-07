@@ -3,11 +3,17 @@
 {% block title %}Hello MainController!{% endblock %}
 
 {% block body %}
-<div class="example-wrapper">
+    <h2>Input component example</h2>
     {{ component('input', { label: 'Input 1' }) }}
     {{ component('input', { label: 'Input 2', type: 'email' }) }}
     {{ component('input', { label: 'Input 3', value: 'default' }) }}
     {{ component('input', { label: 'Input 4', errors: ['some error', 'another error'] }) }}
     {{ component('input', { label: 'Input 5', errors: 'error' }) }}
-</div>
+
+    <h2>Component with service example</h2>
+    <p>Components are services but cloned before injecting <em>state</em>. Below, the state variables
+    should be different but the injected service id should be the same (not cloned).</p>
+    {{ component('with_service', { state: 'foo' }) }}
+    {{ component('with_service') }}
+    {{ component('with_service', { state: 'bar' }) }}
 {% endblock %}
