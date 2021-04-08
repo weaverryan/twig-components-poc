@@ -96,6 +96,9 @@
     "laminas/laminas-zendframework-bridge": {
         "version": "1.0.4"
     },
+    "league/commonmark": {
+        "version": "1.5.8"
+    },
     "monolog/monolog": {
         "version": "2.1.0"
     },
@@ -525,6 +528,9 @@
     },
     "twig/extra-bundle": {
         "version": "v3.0.3"
+    },
+    "twig/markdown-extra": {
+        "version": "v3.3.0"
     },
     "twig/twig": {
         "version": "v3.0.3"
