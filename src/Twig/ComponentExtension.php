@@ -27,6 +27,18 @@ final class ComponentExtension extends AbstractExtension
 
     public function renderComponent(Environment $env, string $name, array $with = []): string
     {
-        return $this->registry->get($name, $with)->render($env);
+        $component = $this->registry->get($name, $with);
+        $rendered = $component->render($env);
+
+        if (!$component instanceof LiveComponent) {
+            return $rendered;
+        }
+
+        return $env->render('components/live_component.html.twig', [
+            'component' => $component,
+            'name' => $name,
+            'data' => $with,
+            'rendered' => $rendered,
+        ]);
     }
 }
