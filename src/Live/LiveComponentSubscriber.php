@@ -3,7 +3,7 @@
 namespace App\Live;
 
 use App\Twig\Component;
-use App\Twig\ComponentRegistry;
+use App\Twig\ComponentFactory;
 use App\Twig\LiveComponent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,12 +14,12 @@ use Twig\Environment;
 
 class LiveComponentSubscriber implements EventSubscriberInterface
 {
-    private ComponentRegistry $componentRegistry;
+    private ComponentFactory $componentFactory;
     private Environment $twigEnvironment;
 
-    public function __construct(ComponentRegistry $componentRegistry, Environment $twigEnvironment)
+    public function __construct(ComponentFactory $componentFactory, Environment $twigEnvironment)
     {
-        $this->componentRegistry = $componentRegistry;
+        $this->componentFactory = $componentFactory;
         $this->twigEnvironment = $twigEnvironment;
     }
 
@@ -40,7 +40,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         // TODO - the other side of the transformer system would go here,
         // which could transform ids back to entities or date strings to objects
 
-        $component = $this->componentRegistry->get(
+        $component = $this->componentFactory->create(
             $request->query->get('component'),
             $props,
             $data

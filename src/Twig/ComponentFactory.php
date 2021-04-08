@@ -8,7 +8,7 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
-final class ComponentRegistry
+final class ComponentFactory
 {
     private ServiceLocator $components;
     private PropertyAccessorInterface $propertyAccessor;
@@ -22,7 +22,7 @@ final class ComponentRegistry
         $this->propertyAccessor = $propertyAccessor;
     }
 
-    public function get(string $name, array $props, array $state = []): Component
+    public function create(string $name, array $props, array $state = []): Component
     {
         // we clone here to ensure we don't modify state of the object in the DI container
         /** @var Component $component */
