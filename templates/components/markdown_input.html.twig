@@ -1,4 +1,17 @@
 <div>
-    <textarea style="width: 400px; height: 200px;">{{ this.value }}</textarea>
+    <textarea
+        data-model="value"
+        {#
+            This triggers the "on input" behavior. In theory,
+            we could try to make this happen automatically, without
+            the user needing to do it. It's added here now for simplicity.
+            And also, it gives the user full control over which event
+            should be used to update it (e.g. "input", "change", "blur")
+        #}
+        data-action="live#update"
+        style="width: 400px; height: 200px;"
+    >
+        {{- this.value -}}
+    </textarea>
     {{ this.value|markdown_to_html }}
 </div>
