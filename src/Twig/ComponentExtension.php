@@ -11,11 +11,11 @@ use Twig\TwigFunction;
  */
 final class ComponentExtension extends AbstractExtension
 {
-    private ComponentRegistry $registry;
+    private ComponentFactory $factory;
 
-    public function __construct(ComponentRegistry $registry)
+    public function __construct(ComponentFactory $factory)
     {
-        $this->registry = $registry;
+        $this->factory = $factory;
     }
 
     public function getFunctions(): array
@@ -27,7 +27,7 @@ final class ComponentExtension extends AbstractExtension
 
     public function renderComponent(Environment $env, string $name, array $props = []): string
     {
-        $component = $this->registry->get($name, $props);
+        $component = $this->factory->create($name, $props);
         $rendered = $component->render($env);
 
         if (!$component instanceof LiveComponent) {
