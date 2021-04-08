@@ -3,7 +3,6 @@
 namespace App\Live;
 
 use App\Twig\Component;
-use App\Twig\ComponentExtension;
 use App\Twig\ComponentRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,13 +13,11 @@ use Twig\Environment;
 class LiveComponentSubscriber implements EventSubscriberInterface
 {
     private ComponentRegistry $componentRegistry;
-    private ComponentExtension $componentExtension;
     private Environment $twigEnvironment;
 
-    public function __construct(ComponentRegistry $componentRegistry, ComponentExtension $componentExtension, Environment $twigEnvironment)
+    public function __construct(ComponentRegistry $componentRegistry, Environment $twigEnvironment)
     {
         $this->componentRegistry = $componentRegistry;
-        $this->componentExtension = $componentExtension;
         $this->twigEnvironment = $twigEnvironment;
     }
 
