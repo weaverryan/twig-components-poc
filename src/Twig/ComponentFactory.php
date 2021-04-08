@@ -28,9 +28,7 @@ final class ComponentFactory
         /** @var Component $component */
         $component = clone $this->components->get($name);
 
-        // TODO: smarter system where we read the argument names
-        // and maybe even transform them (e.g. id => entity object)
-        $component->hydrate($props);
+        $this->hydrate($component, $props);
 
         // store the original props for later
         if ($component instanceof LiveComponent) {
@@ -68,5 +66,25 @@ final class ComponentFactory
         }
 
         return $component;
+    }
+
+    private function hydrate(Component $component, array $props): void
+    {
+        try {
+            $refMethod = (new \ReflectionClass($component))->getMethod('hydrate');
+        } catch (\ReflectionException $e) {
+            // no hydrate method
+            return;
+        }
+
+        $parameters = [];
+
+        foreach ($refMethod->getParameters() as $refParameter) {
+            // TODO: "transformers" (e.g. id => entity object)
+            // TODO: error checking!
+            $parameters[] = $props[$refParameter->getName()];
+        }
+
+        $component->hydrate(...$parameters);
     }
 }
