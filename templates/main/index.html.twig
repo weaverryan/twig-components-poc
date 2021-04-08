@@ -18,5 +18,5 @@
     {{ component('with_service', { state: 'bar' }) }}
 
     <h2>Markdown live component</h2>
-    {{ component('markdown_input', { value: 'This is **working**.' }) }}
+    {{ component('markdown_input', { name: 'body', value: 'This is **working**.' }) }}
 {% endblock %}
