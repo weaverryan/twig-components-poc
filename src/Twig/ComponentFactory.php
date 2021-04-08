@@ -81,8 +81,13 @@ final class ComponentFactory
 
         foreach ($refMethod->getParameters() as $refParameter) {
             // TODO: "transformers" (e.g. id => entity object)
+            if (isset($props[$refParameter->getName()])) {
+                $parameters[] = $props[$refParameter->getName()];
+
+                continue;
+            }
+
             // TODO: error checking!
-            $parameters[] = $props[$refParameter->getName()];
         }
 
         $component->hydrate(...$parameters);
