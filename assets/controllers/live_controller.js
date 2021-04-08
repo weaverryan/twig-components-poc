@@ -5,6 +5,7 @@ export default class extends Controller {
     static values = {
         component: String,
         data: Object,
+        props: Object,
     }
 
     /**
@@ -23,6 +24,7 @@ export default class extends Controller {
             // no "action" here: we are only rendering the model with
             // the given data
             data: JSON.stringify(this.dataValue),
+            props: JSON.stringify(this.propsValue),
         });
 
         // need to think about the URL structure... I really had this RPC stuff
@@ -37,5 +39,9 @@ export default class extends Controller {
 
         // "data" holds the new, updated data
         this.dataValue = data.data;
+        // "props" holds the original props... which should not have changed...
+        // but in theory, they could have. If they did, they would come with
+        // a new checksum attached anyways
+        this.propsValue = data.props;
     }
 }
