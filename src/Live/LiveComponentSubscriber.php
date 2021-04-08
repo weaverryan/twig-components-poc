@@ -7,7 +7,7 @@ use App\Twig\ComponentRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Twig\Environment;
 
 class LiveComponentSubscriber implements EventSubscriberInterface
@@ -59,7 +59,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         $request->attributes->set('_component', $component);
     }
 
-    public function onKernelResponse(ResponseEvent $event)
+    public function onKernelView(ViewEvent $event)
     {
         $request = $event->getRequest();
         // todo - we might rely on some magic "defaults" on the route
@@ -85,7 +85,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
     {
         return [
             RequestEvent::class => 'onKernelRequest',
-            ResponseEvent::class => 'onKernelResponse',
+            ViewEvent::class => 'onKernelView',
         ];
     }
 }
