@@ -23,20 +23,9 @@ final class MarkdownInput extends LiveComponent
      */
     public string $value = '';
 
-    public function hydrate(array $props)
+    public function hydrate(string $name): void
     {
-        // not included in this iteration is the ability to have a more dynamic
-        // hydrate method, like:
-        // public function hydrate(string $name)
-        // where we use Reflection to pass in the correct keys to each argument
-        // when we have this, we wouldn't need code like this below, because
-        // unless an argument has a default value, we would throw an exception
-        // if it's not passed as a prop
-        if (!isset($props['name'])) {
-            throw new \InvalidArgumentException('Missing "name" prop');
-        }
-
-        $this->name = $props['name'];
+        $this->name = $name;
     }
 
     public function getName(): string

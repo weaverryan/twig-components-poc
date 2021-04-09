@@ -10,11 +10,6 @@ use function Symfony\Component\String\s;
  */
 abstract class Component
 {
-    public function hydrate(array $props)
-    {
-        // override to use props to assign private properties
-    }
-
     /**
      * Override if creating "inline" component and just return html.
      */
