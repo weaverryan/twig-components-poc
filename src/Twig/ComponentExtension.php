@@ -12,10 +12,12 @@ use Twig\TwigFunction;
 final class ComponentExtension extends AbstractExtension
 {
     private ComponentFactory $factory;
+    private ComponentDataAccessor $dataAccessor;
 
-    public function __construct(ComponentFactory $factory)
+    public function __construct(ComponentFactory $factory, ComponentDataAccessor $dataAccessor)
     {
         $this->factory = $factory;
+        $this->dataAccessor = $dataAccessor;
     }
 
     public function getFunctions(): array
@@ -37,10 +39,7 @@ final class ComponentExtension extends AbstractExtension
         return $env->render('components/live_component.html.twig', [
             'component' => $component,
             'name' => $name,
-            // TODO - need transformer system to convert data objects
-            // for example, converting an Entity object to an id
-            // We also need this in LiveComponentSubscriber::onKernelResponse
-            'data' => $component->getData(),
+            'data' => $this->dataAccessor->readData($component),
             'props' => $component->getProps(),
             'rendered' => $rendered,
         ]);
