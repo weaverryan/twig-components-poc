@@ -31,23 +31,4 @@ abstract class LiveComponent extends Component
     {
         $this->props = $props;
     }
-
-    /**
-     * Returns a map of the name=>value of the public, modifiable data.
-     *
-     * This will be the data that is passed to the frontend, and should
-     * match the data (e.g. public properties) that are modifiable.
-     */
-    public function getData(): array
-    {
-        $reflectionObject = new \ReflectionObject($this);
-        $data = [];
-        foreach ($reflectionObject->getProperties() as $property) {
-            if ($property->isPublic()) {
-                $data[$property->getName()] = $this->{$property->getName()};
-            }
-        }
-
-        return $data;
-    }
 }

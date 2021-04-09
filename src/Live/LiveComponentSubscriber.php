@@ -3,6 +3,7 @@
 namespace App\Live;
 
 use App\Twig\Component;
+use App\Twig\ComponentDataAccessor;
 use App\Twig\ComponentFactory;
 use App\Twig\LiveComponent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -16,11 +17,13 @@ class LiveComponentSubscriber implements EventSubscriberInterface
 {
     private ComponentFactory $componentFactory;
     private Environment $twigEnvironment;
+    private ComponentDataAccessor $dataAccessor;
 
-    public function __construct(ComponentFactory $componentFactory, Environment $twigEnvironment)
+    public function __construct(ComponentFactory $componentFactory, Environment $twigEnvironment, ComponentDataAccessor $dataAccessor)
     {
         $this->componentFactory = $componentFactory;
         $this->twigEnvironment = $twigEnvironment;
+        $this->dataAccessor = $dataAccessor;
     }
 
     public function onKernelRequest(RequestEvent $event)
@@ -37,18 +40,17 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         $props = \json_decode($request->query->get('props'), true, 512, \JSON_THROW_ON_ERROR);
         $data = \json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
 
-        // TODO - the other side of the transformer system would go here,
-        // which could transform ids back to entities or date strings to objects
-
         $component = $this->componentFactory->create(
             $request->query->get('component'),
-            $props,
-            $data
+            $props
         );
 
         if (!$component instanceof LiveComponent) {
             throw new NotFoundHttpException('this is not a live component!');
         }
+
+        // write the user-supplied, writaable data onto the Component
+        $this->dataAccessor->writeData($component, $data);
 
         // extra variables to be made available to the controller
         // (for "actions" only)
@@ -89,9 +91,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
 
         $response = new JsonResponse([
             'html' => $component->render($this->twigEnvironment),
-            // TODO - need transformer system here, the same that's
-            // mentioned in ComponentExtension
-            'data' => $component->getData(),
+            'data' => $this->dataAccessor->readData($component),
             'props' => $component->getProps(),
         ]);
         $event->setResponse($response);
