@@ -49,7 +49,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             throw new NotFoundHttpException('this is not a live component!');
         }
 
-        // write the user-supplied, writaable data onto the Component
+        // write the user-supplied, writable data onto the Component
         $this->dataAccessor->writeData($component, $data);
 
         // extra variables to be made available to the controller
