@@ -3,27 +3,26 @@
 namespace App\Live;
 
 use App\Twig\ComponentFactory;
+use App\Twig\ComponentHydrator;
 use App\Twig\LiveComponent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
 use Twig\Environment;
 
 class LiveComponentSubscriber implements EventSubscriberInterface
 {
     private ComponentFactory $componentFactory;
     private Environment $twigEnvironment;
-    private SerializerInterface $serializer;
+    private ComponentHydrator $hydrator;
 
-    public function __construct(ComponentFactory $componentFactory, Environment $twigEnvironment, SerializerInterface $serializer)
+    public function __construct(ComponentFactory $componentFactory, Environment $twigEnvironment, ComponentHydrator $hydrator)
     {
         $this->componentFactory = $componentFactory;
         $this->twigEnvironment = $twigEnvironment;
-        $this->serializer = $serializer;
+        $this->hydrator = $hydrator;
     }
 
     public function onKernelRequest(RequestEvent $event)
@@ -37,16 +36,18 @@ class LiveComponentSubscriber implements EventSubscriberInterface
 
         // TODO - we might read the Content-Type header to see if the input
         // is JSON or form-encoded data
-        $data = $request->query->get('data');
-
+        $data = \json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
         $component = $this->componentFactory->create($request->query->get('component'));
 
         if (!$component instanceof LiveComponent) {
             throw new NotFoundHttpException('this is not a live component!');
         }
 
-        // TODO: our own deserializer/hydrator
-        $this->serializer->deserialize($data, \get_class($component), 'json', [AbstractNormalizer::OBJECT_TO_POPULATE => $component]);
+        if (!\is_array($data)) {
+            throw new NotFoundHttpException('invalid component data');
+        }
+
+        $this->hydrator->hydrate($component, $data);
 
         // extra variables to be made available to the controller
         // (for "actions" only)
@@ -83,13 +84,9 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // TODO: this serializes methods w/o properties - how to avoid
-        // TODO: our own serializer/dehydrator
-        $serialized = $this->serializer->normalize($component, 'json');
-
         $response = new JsonResponse([
             'html' => $component->render($this->twigEnvironment),
-            'data' => $serialized,
+            'data' => $this->hydrator->dehydrate($component),
         ]);
         $event->setResponse($response);
     }

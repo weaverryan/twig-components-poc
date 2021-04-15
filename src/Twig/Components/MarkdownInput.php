@@ -11,16 +11,19 @@ final class MarkdownInput extends LiveComponent
 {
     /**
      * TODO: mark as state
+     * @state
      */
     public string $name;
 
     /**
      * TODO: mark as state
+     * @state
      */
     public string $label;
 
     /**
      * TODO: mark as writable/bindable state
+     * @state
      */
     public string $value = '';
 
