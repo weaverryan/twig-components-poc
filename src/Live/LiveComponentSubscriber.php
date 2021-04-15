@@ -85,7 +85,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
 
         // TODO: this serializes methods w/o properties - how to avoid
         // TODO: our own serializer/dehydrator
-        $serialized = $this->serializer->serialize($component, 'json');
+        $serialized = $this->serializer->normalize($component, 'json');
 
         $response = new JsonResponse([
             'html' => $component->render($this->twigEnvironment),
