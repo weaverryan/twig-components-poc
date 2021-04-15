@@ -15,23 +15,13 @@ final class MarkdownInput extends LiveComponent
      * lifecycle as it affects the field being updated on the
      * form submit.
      */
-    private string $name;
+    public string $name;
 
     /**
      * This is considered a "modifiable" property. Manipulating this
      * in the ajax by hand has no adverse effects on the app.
      */
     public string $value = '';
-
-    public function hydrate(string $name): void
-    {
-        $this->name = $name;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
 
     public function getRows(): int
     {

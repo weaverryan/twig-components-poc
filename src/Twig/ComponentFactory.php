@@ -11,67 +11,42 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 final class ComponentFactory
 {
     private ServiceLocator $components;
-    private ComponentDataAccessor $dataAccessor;
+    private PropertyAccessorInterface $propertyAccessor;
 
     /**
      * @param Component[]|ServiceLocator $components
      */
-    public function __construct(ServiceLocator $components, ComponentDataAccessor $dataAccessor)
+    public function __construct(ServiceLocator $components, PropertyAccessorInterface $propertyAccessor)
     {
         $this->components = $components;
-        $this->dataAccessor = $dataAccessor;
+        $this->propertyAccessor = $propertyAccessor;
     }
 
-    public function create(string $name, array $props): Component
+    /**
+     * Creates the component and "mounts" it with the passed data.
+     */
+    public function mount(string $name, array $data): Component
     {
-        // we clone here to ensure we don't modify state of the object in the DI container
-        /** @var Component $component */
-        $component = clone $this->components->get($name);
+        $component = $this->get($name);
 
-        $this->hydrate($component, $props);
+        foreach ($data as $property => $value) {
+            // TODO: use Component::mount() if available
+            if (!$this->propertyAccessor->isWritable($component, $property)) {
+                throw new \LogicException(\sprintf('Unable to write "%s" to component "%s".', $property, \get_class($component)));
+            }
 
-        // store the original props for later
-        if ($component instanceof LiveComponent) {
-            $component->setProps($props);
+            $this->propertyAccessor->setValue($component, $property, $value);
         }
-
-        /*
-         * This is for convenience.
-         *
-         * This is mostly here for non-live components, where everything has public
-         * values. In that case, we don't want to require you to need to create a
-         * hydrate() method where you manually read in the $props and set each
-         * on to the corresponding public property. That's why we pass the props
-         * to `hydrate()`... but then we also assign the props to any matching
-         * public properties.
-         */
-        $this->dataAccessor->writeData($component, $props);
 
         return $component;
     }
 
-    private function hydrate(Component $component, array $props): void
+    /**
+     * Creates the component and returns it in an "unmounted" state.
+     */
+    public function get(string $name): Component
     {
-        try {
-            $refMethod = (new \ReflectionClass($component))->getMethod('hydrate');
-        } catch (\ReflectionException $e) {
-            // no hydrate method
-            return;
-        }
-
-        $parameters = [];
-
-        foreach ($refMethod->getParameters() as $refParameter) {
-            // TODO: "transformers" (e.g. id => entity object)
-            if (isset($props[$refParameter->getName()])) {
-                $parameters[] = $props[$refParameter->getName()];
-
-                continue;
-            }
-
-            // TODO: error checking!
-        }
-
-        $component->hydrate(...$parameters);
+        // we clone here to ensure we don't modify state of the object in the DI container
+        return clone $this->components->get($name);
     }
 }
