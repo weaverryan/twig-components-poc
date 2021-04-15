@@ -30,7 +30,7 @@ final class ComponentExtension extends AbstractExtension
 
     public function renderComponent(Environment $env, string $name, array $props = []): string
     {
-        $component = $this->factory->mount($name, $props);
+        $component = $this->factory->createAndMount($name, $props);
         $rendered = $component->render($env);
 
         if (!$component instanceof LiveComponent) {

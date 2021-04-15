@@ -25,12 +25,14 @@ final class ComponentFactory
     /**
      * Creates the component and "mounts" it with the passed data.
      */
-    public function mount(string $name, array $data): Component
+    public function createAndMount(string $name, array $data): Component
     {
-        $component = $this->get($name);
+        $component = $this->create($name);
 
+        $this->mount($component, $data);
+
+        // set data that wasn't set in mount on the component directly
         foreach ($data as $property => $value) {
-            // TODO: use Component::mount() if available
             if (!$this->propertyAccessor->isWritable($component, $property)) {
                 throw new \LogicException(\sprintf('Unable to write "%s" to component "%s".', $property, \get_class($component)));
             }
@@ -44,9 +46,34 @@ final class ComponentFactory
     /**
      * Creates the component and returns it in an "unmounted" state.
      */
-    public function get(string $name): Component
+    public function create(string $name): Component
     {
         // we clone here to ensure we don't modify state of the object in the DI container
         return clone $this->components->get($name);
+    }
+
+    private function mount(Component $component, array &$data): void
+    {
+        try {
+            $method = (new \ReflectionClass($component))->getMethod('mount');
+        } catch (\ReflectionException $e) {
+            // no hydrate method
+            return;
+        }
+
+        $parameters = [];
+
+        foreach ($method->getParameters() as $refParameter) {
+            $name = $refParameter->getName();
+
+            if (\array_key_exists($name, $data)) {
+                $parameters[] = $data[$name];
+
+                // remove the data element so it isn't used to set the property directly.
+                unset($data[$name]);
+            }
+        }
+
+        $component->mount(...$parameters);
     }
 }

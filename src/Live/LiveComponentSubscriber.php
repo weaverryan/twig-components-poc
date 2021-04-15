@@ -39,7 +39,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         // is JSON or form-encoded data
         $data = $request->query->get('data');
 
-        $component = $this->componentFactory->get($request->query->get('component'));
+        $component = $this->componentFactory->create($request->query->get('component'));
 
         if (!$component instanceof LiveComponent) {
             throw new NotFoundHttpException('this is not a live component!');

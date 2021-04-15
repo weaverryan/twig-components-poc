@@ -19,4 +19,7 @@
 
     <h2>Markdown live component</h2>
     {{ component('markdown_input', { name: 'body', value: 'This is **working**.' }) }}
+
+    <h2>Second Markdown live component with custom label</h2>
+    {{ component('markdown_input', { name: 'body', value: 'This is **working**.', label: 'Custom Label' }) }}
 {% endblock %}
