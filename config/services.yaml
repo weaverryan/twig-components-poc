@@ -30,6 +30,10 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    App\Twig\Hydrator\DoctrineEntityPropertyHydrator:
+        arguments: [['@doctrine']] # array of manager registry's so multiple could be used (orm/odm)
+        tags: [{ name: twig.component.property_hydrator, priority: -200 }]
+
     twig.component.datetime_property_hydrator:
         class: App\Twig\Hydrator\NormalizerBridgePropertyHydrator
         arguments: ['@serializer.normalizer.datetime']

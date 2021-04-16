@@ -17,6 +17,11 @@
     {{ component('with_service') }}
     {{ component('with_service', { state: 'bar' }) }}
 
+    {% if post %}
+        <h2>PostEdit component</h2>
+        {{ component('edit_post', { post: post }) }}
+    {% endif %}
+
     <h2>Date components</h2>
     {{ component('date') }}
 
