@@ -2,6 +2,7 @@
 
 namespace App\Twig;
 
+use Symfony\Component\Serializer\SerializerInterface;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -12,12 +13,12 @@ use Twig\TwigFunction;
 final class ComponentExtension extends AbstractExtension
 {
     private ComponentFactory $factory;
-    private ComponentDataAccessor $dataAccessor;
+    private SerializerInterface $serializer;
 
-    public function __construct(ComponentFactory $factory, ComponentDataAccessor $dataAccessor)
+    public function __construct(ComponentFactory $factory, SerializerInterface $serializer)
     {
         $this->factory = $factory;
-        $this->dataAccessor = $dataAccessor;
+        $this->serializer = $serializer;
     }
 
     public function getFunctions(): array
@@ -29,18 +30,21 @@ final class ComponentExtension extends AbstractExtension
 
     public function renderComponent(Environment $env, string $name, array $props = []): string
     {
-        $component = $this->factory->create($name, $props);
+        $component = $this->factory->createAndMount($name, $props);
         $rendered = $component->render($env);
 
         if (!$component instanceof LiveComponent) {
             return $rendered;
         }
 
+        // TODO: this serializes methods w/o properties - how to avoid
+        // TODO: our own serializer/dehydrator
+        $serialized = $this->serializer->serialize($component, 'json');
+
         return $env->render('components/live_component.html.twig', [
             'component' => $component,
             'name' => $name,
-            'data' => $this->dataAccessor->readData($component),
-            'props' => $component->getProps(),
+            'data' => $serialized,
             'rendered' => $rendered,
         ]);
     }

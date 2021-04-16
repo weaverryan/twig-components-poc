@@ -2,50 +2,59 @@
     <div>
         <strong>(type more to expand the box)</strong>
         <p>Update on "input" (each key stroke)</p>
-        <textarea
-            name="{{ this.name }}"
-            data-model="value"
-            {#
-                This triggers the "on input" behavior. In theory,
-                we could try to make this happen automatically, without
-                the user needing to do it. It's added here now for simplicity.
-                And also, it gives the user full control over which event
-                should be used to update it (e.g. "input", "change", "blur").
-                See the other textareas for examples.
-            #}
-            data-action="live#update"
-            rows="{{ this.rows }}"
-        >
-            {{- this.value -}}
-        </textarea>
+        <label>
+            {{ this.label }}<br>
+            <textarea
+                name="{{ this.name }}"
+                data-model="value"
+                {#
+                    This triggers the "on input" behavior. In theory,
+                    we could try to make this happen automatically, without
+                    the user needing to do it. It's added here now for simplicity.
+                    And also, it gives the user full control over which event
+                    should be used to update it (e.g. "input", "change", "blur").
+                    See the other textareas for examples.
+                #}
+                data-action="live#update"
+                rows="{{ this.rows }}"
+            >
+                {{- this.value -}}
+            </textarea>
+        </label>
 
         <p>Update on "blur"</p>
-        <textarea
-            name="{{ this.name }}"
-            data-model="value"
-            {#
-                lazy: if you want to not update the model until "blur" instead
-                of change", just change the event! This is native Stimulus:
-            #}
-            data-action="blur->live#update"
-            rows="{{ this.rows }}"
-        >
-            {{- this.value -}}
-        </textarea>
+        <label>
+            {{ this.label }}<br>
+            <textarea
+                name="{{ this.name }}"
+                data-model="value"
+                {#
+                    lazy: if you want to not update the model until "blur" instead
+                    of change", just change the event! This is native Stimulus:
+                #}
+                data-action="blur->live#update"
+                rows="{{ this.rows }}"
+            >
+                {{- this.value -}}
+            </textarea>
+        </label>
 
         <p>Update in JavaScript, but don't re-render (until button click)</p>
-        <textarea
-            name="{{ this.name }}"
-            data-model="value"
-            {#
-                defer: if you want to update the model on the client-side but
-                not send it to the server until the next request, use updateDefer()
-            #}
-            data-action="live#updateDefer"
-            rows="{{ this.rows }}"
-        >
-            {{- this.value -}}
-        </textarea>
+        <label>
+            {{ this.label }}<br>
+            <textarea
+                name="{{ this.name }}"
+                data-model="value"
+                {#
+                    defer: if you want to update the model on the client-side but
+                    not send it to the server until the next request, use updateDefer()
+                #}
+                data-action="live#updateDefer"
+                rows="{{ this.rows }}"
+            >
+                {{- this.value -}}
+            </textarea>
+        </label>
 
         <div>
             <button
