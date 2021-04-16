@@ -2,6 +2,9 @@
 
 namespace App\Twig;
 
+use Symfony\Component\PropertyAccess\Exception\AccessException;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
@@ -10,13 +13,15 @@ final class ComponentHydrator
     private const CHECKSUM_KEY = '_checksum';
 
     private iterable $propertyHydrators;
+    private PropertyAccessorInterface $propertyAccessor;
 
     /**
      * @param PropertyHydrator[] $propertyHydrators
      */
-    public function __construct(iterable $propertyHydrators)
+    public function __construct(iterable $propertyHydrators, PropertyAccessorInterface $propertyAccessor)
     {
         $this->propertyHydrators = $propertyHydrators;
+        $this->propertyAccessor = $propertyAccessor;
     }
 
     public function dehydrate(LiveComponent $component): array
@@ -51,10 +56,21 @@ final class ComponentHydrator
                 throw new \RuntimeException(\sprintf('Unable to hydrate "%s::$%s" - data was not sent.', \get_class($component), $name));
             }
 
+            $value = $this->hydrateProperty($property, $data[$name]);
+
             // TODO: allow user to take over hyrdation on a per-property basis
-            // TODO: "bindable" state should be set via property access
+            try {
+                $this->propertyAccessor->setValue($component, $name, $value);
+
+                continue;
+            } catch (AccessException $e) {
+                if (str_contains((string) $property->getDocComment(), '@bind')) {
+                    throw new \RuntimeException('"Bindable" component properties must be writable.');
+                }
+            }
+
             $property->setAccessible(true);
-            $property->setValue($component, $this->hydrateProperty($property, $data[$name]));
+            $property->setValue($component, $value);
         }
     }
 
@@ -116,7 +132,8 @@ final class ComponentHydrator
 
         foreach ($class->getProperties() as $property) {
             // TODO: use real annotation/attribute
-            if (str_contains((string) $property->getDocComment(), '@state')) {
+            $doc = (string) $property->getDocComment();
+            if (str_contains($doc, '@state') || str_contains($doc, '@bind')) {
                 yield $property;
             }
         }
