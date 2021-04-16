@@ -10,8 +10,6 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
  */
 final class ComponentHydrator
 {
-    private const CHECKSUM_KEY = '_checksum';
-
     private iterable $propertyHydrators;
     private PropertyAccessorInterface $propertyAccessor;
 
@@ -37,7 +35,6 @@ final class ComponentHydrator
         }
 
         // TODO: calculate checksum
-        $data[self::CHECKSUM_KEY] = 'todo';
 
         return $data;
     }
@@ -47,7 +44,6 @@ final class ComponentHydrator
         // TODO: allow user to totally take over (via interface on component?)
 
         // TODO: verify checksum
-        unset($data[self::CHECKSUM_KEY]);
 
         foreach (self::reflectionProperties($component) as $property) {
             $name = $property->getName();
