@@ -9,16 +9,20 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
  */
 final class ComponentHydrator
 {
+    private const CHECKSUM_KEY = '_checksum';
+
     private iterable $propertyHydrators;
     private PropertyAccessorInterface $propertyAccessor;
+    private string $secret;
 
     /**
      * @param PropertyHydrator[] $propertyHydrators
      */
-    public function __construct(iterable $propertyHydrators, PropertyAccessorInterface $propertyAccessor)
+    public function __construct(iterable $propertyHydrators, PropertyAccessorInterface $propertyAccessor, string $secret)
     {
         $this->propertyHydrators = $propertyHydrators;
         $this->propertyAccessor = $propertyAccessor;
+        $this->secret = $secret;
     }
 
     public function dehydrate(LiveComponent $component): array
@@ -26,6 +30,7 @@ final class ComponentHydrator
         // TODO: allow user to totally take over (via interface on component?)
 
         $data = [];
+        $stateProperties = [];
 
         foreach (self::reflectionProperties($component) as $property) {
             // TODO: allow user to take over dehydration on a per-property basis
@@ -37,12 +42,13 @@ final class ComponentHydrator
             } else {
                 // non-writable state uses reflection to get value
                 $value = $property->getValue($component);
+                $stateProperties[] = $property->getName();
             }
 
             $data[$property->getName()] = $this->dehydrateProperty($value);
         }
 
-        // TODO: calculate checksum
+        $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $stateProperties);
 
         return $data;
     }
@@ -51,7 +57,23 @@ final class ComponentHydrator
     {
         // TODO: allow user to totally take over (via interface on component?)
 
-        // TODO: verify checksum
+        $stateProperties = [];
+
+        /*
+         * Determine state properties for checksum verification. We need to do this
+         * before setting properties on the component. It is unlikely but there could
+         * be security implications to doing it after (component setter's could have
+         * side effects).
+         */
+        foreach (self::reflectionProperties($component) as $property) {
+            if (str_contains((string) $property->getDocComment(), '@State')) {
+                $stateProperties[] = $property->getName();
+            }
+        }
+
+        $this->verifyChecksum($data, $stateProperties);
+
+        unset($data[self::CHECKSUM_KEY]);
 
         foreach (self::reflectionProperties($component) as $property) {
             $name = $property->getName();
@@ -72,6 +94,28 @@ final class ComponentHydrator
             } else {
                 $property->setValue($component, $value);
             }
+        }
+    }
+
+    private function computeChecksum(array $data, array $stateProperties): string
+    {
+        // filter to only state properties
+        $state = array_filter($data, static fn($key) => \in_array($key, $stateProperties, true), ARRAY_FILTER_USE_KEY);
+
+        // sort so it is always consistent (frontend could have re-ordered data)
+        \ksort($state);
+
+        return \base64_encode(\hash_hmac('sha256', \json_encode($state, \JSON_THROW_ON_ERROR), $this->secret, true));
+    }
+
+    private function verifyChecksum(array $data, array $stateProperties): void
+    {
+        if (!\array_key_exists(self::CHECKSUM_KEY, $data)) {
+            throw new \RuntimeException('No checksum!');
+        }
+
+        if (!hash_equals($this->computeChecksum($data, $stateProperties), $data[self::CHECKSUM_KEY])) {
+            throw new \RuntimeException('Invalid checksum!');
         }
     }
 
