@@ -19,7 +19,7 @@ final class Date extends LiveComponent
         $this->created = $created ?? new \DateTime('now');
     }
 
-    public function created(): \DateTimeInterface
+    public function getCreatedAt(): \DateTimeInterface
     {
         return $this->created;
     }
