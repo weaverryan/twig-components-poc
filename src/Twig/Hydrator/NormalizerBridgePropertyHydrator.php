@@ -2,7 +2,7 @@
 
 namespace App\Twig\Hydrator;
 
-use App\Twig\HydrationException;
+use App\Twig\UnsupportedHydrationException;
 use App\Twig\PropertyHydrator;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -27,7 +27,7 @@ final class NormalizerBridgePropertyHydrator implements PropertyHydrator
     public function dehydrate($value)
     {
         if (!$this->normalizer->supportsNormalization($value)) {
-            throw new HydrationException();
+            throw new UnsupportedHydrationException();
         }
 
         return $this->normalizer->normalize($value);
@@ -36,7 +36,7 @@ final class NormalizerBridgePropertyHydrator implements PropertyHydrator
     public function hydrate(string $type, $value)
     {
         if (!$this->normalizer->supportsDenormalization($value, $type)) {
-            throw new HydrationException();
+            throw new UnsupportedHydrationException();
         }
 
         return $this->normalizer->denormalize($value, $type);

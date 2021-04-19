@@ -84,7 +84,7 @@ final class ComponentHydrator
         foreach ($this->propertyHydrators as $hydrator) {
             try {
                 return $hydrator->hydrate($property->getType()->getName(), $value);
-            } catch (HydrationException $e) {
+            } catch (UnsupportedHydrationException $e) {
                 continue;
             }
         }
@@ -104,7 +104,7 @@ final class ComponentHydrator
                 $value = $hydrator->dehydrate($value);
 
                 break;
-            } catch (HydrationException $e) {
+            } catch (UnsupportedHydrationException $e) {
                 continue;
             }
         }

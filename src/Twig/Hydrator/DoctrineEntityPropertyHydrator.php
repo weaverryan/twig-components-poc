@@ -2,7 +2,7 @@
 
 namespace App\Twig\Hydrator;
 
-use App\Twig\HydrationException;
+use App\Twig\UnsupportedHydrationException;
 use App\Twig\PropertyHydrator;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
@@ -25,7 +25,7 @@ final class DoctrineEntityPropertyHydrator implements PropertyHydrator
     public function dehydrate($value)
     {
         if (!\is_object($value)) {
-            throw new HydrationException();
+            throw new UnsupportedHydrationException();
         }
 
         $id = $this
@@ -60,6 +60,6 @@ final class DoctrineEntityPropertyHydrator implements PropertyHydrator
             }
         }
 
-        throw new HydrationException();
+        throw new UnsupportedHydrationException();
     }
 }

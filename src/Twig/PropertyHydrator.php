@@ -12,7 +12,7 @@ interface PropertyHydrator
      *
      * @return scalar|null|array
      *
-     * @throws HydrationException If unable to dehydrate.
+     * @throws UnsupportedHydrationException If unable to dehydrate.
      */
     public function dehydrate($value);
 
@@ -21,7 +21,7 @@ interface PropertyHydrator
      *
      * @return mixed
      *
-     * @throws HydrationException If unable to dehydrate.
+     * @throws UnsupportedHydrationException If unable to dehydrate.
      */
     public function hydrate(string $type, $value);
 }
