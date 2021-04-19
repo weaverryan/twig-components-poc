@@ -57,7 +57,8 @@ final class ComponentHydrator
             $name = $property->getName();
 
             if (!\array_key_exists($name, $data)) {
-                throw new \RuntimeException(\sprintf('Unable to hydrate "%s::$%s" - data was not sent.', \get_class($component), $name));
+                // this property was not sent
+                continue;
             }
 
             $value = $this->hydrateProperty($property, $data[$name]);
