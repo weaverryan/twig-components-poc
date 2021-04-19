@@ -11,7 +11,7 @@ use App\Twig\LiveComponent;
 final class EditPost extends LiveComponent
 {
     /**
-     * @state
+     * @State
      */
     public Post $post;
 }

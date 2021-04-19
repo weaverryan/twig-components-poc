@@ -60,7 +60,7 @@ final class ComponentHydrator
 
                 continue;
             } catch (AccessException $e) {
-                if (str_contains((string) $property->getDocComment(), '@bind')) {
+                if (str_contains((string) $property->getDocComment(), '@WritableState')) {
                     throw new \RuntimeException('"Bindable" component properties must be writable.');
                 }
             }
@@ -129,7 +129,7 @@ final class ComponentHydrator
         foreach ($class->getProperties() as $property) {
             // TODO: use real annotation/attribute
             $doc = (string) $property->getDocComment();
-            if (str_contains($doc, '@state') || str_contains($doc, '@bind')) {
+            if (str_contains($doc, '@State') || str_contains($doc, '@WritableState')) {
                 yield $property;
             }
         }

@@ -10,7 +10,7 @@ use App\Twig\LiveComponent;
 final class Date extends LiveComponent
 {
     /**
-     * @state
+     * @State
      */
     private \DateTimeInterface $created;
 

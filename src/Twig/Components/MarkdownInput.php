@@ -10,17 +10,17 @@ use App\Twig\LiveComponent;
 final class MarkdownInput extends LiveComponent
 {
     /**
-     * @state
+     * @State
      */
     public string $name;
 
     /**
-     * @state
+     * @State
      */
     public string $label;
 
     /**
-     * @bind
+     * @WritableState
      */
     public string $value = '';
 
