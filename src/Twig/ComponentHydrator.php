@@ -104,6 +104,11 @@ final class ComponentHydrator
      */
     private function dehydrateProperty($value)
     {
+        if (\is_scalar($value) || \is_array($value) || \is_null($value)) {
+            // nothing to dehydrate...
+            return $value;
+        }
+
         foreach ($this->propertyHydrators as $hydrator) {
             try {
                 $value = $hydrator->dehydrate($value);
