@@ -2,7 +2,6 @@
 
 namespace App\Twig;
 
-use Symfony\Component\PropertyAccess\Exception\AccessException;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
 /**
@@ -29,9 +28,18 @@ final class ComponentHydrator
         $data = [];
 
         foreach (self::reflectionProperties($component) as $property) {
-            // TODO: allow user to take over dehyrdation on a per-property basis
-            $property->setAccessible(true);
-            $data[$property->getName()] = $this->dehydrateProperty($property->getValue($component));
+            // TODO: allow user to take over dehydration on a per-property basis
+
+            if (str_contains((string) $property->getDocComment(), '@WritableState')) {
+                // writable state uses property access to get value
+                // TODO: improve error message if not readable
+                $value = $this->propertyAccessor->getValue($component, $property->getName());
+            } else {
+                // non-writable state uses reflection to get value
+                $value = $property->getValue($component);
+            }
+
+            $data[$property->getName()] = $this->dehydrateProperty($value);
         }
 
         // TODO: calculate checksum
@@ -54,19 +62,15 @@ final class ComponentHydrator
 
             $value = $this->hydrateProperty($property, $data[$name]);
 
-            // TODO: allow user to take over hyrdation on a per-property basis
-            try {
+            // TODO: allow user to take over hydration on a per-property basis
+
+            if (str_contains((string) $property->getDocComment(), '@WritableState')) {
+                // writable state uses property access to set value
+                // TODO: improve error message if not writable
                 $this->propertyAccessor->setValue($component, $name, $value);
-
-                continue;
-            } catch (AccessException $e) {
-                if (str_contains((string) $property->getDocComment(), '@WritableState')) {
-                    throw new \RuntimeException('"Bindable" component properties must be writable.');
-                }
+            } else {
+                $property->setValue($component, $value);
             }
-
-            $property->setAccessible(true);
-            $property->setValue($component, $value);
         }
     }
 
@@ -129,7 +133,17 @@ final class ComponentHydrator
         foreach ($class->getProperties() as $property) {
             // TODO: use real annotation/attribute
             $doc = (string) $property->getDocComment();
-            if (str_contains($doc, '@State') || str_contains($doc, '@WritableState')) {
+
+            if (str_contains($doc, '@WritableState')) {
+                yield $property;
+
+                continue;
+            }
+
+            if (str_contains($doc, '@State')) {
+                // ensure non-writable state is accessible
+                $property->setAccessible(true);
+
                 yield $property;
             }
         }
