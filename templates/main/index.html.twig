@@ -17,6 +17,9 @@
     {{ component('with_service') }}
     {{ component('with_service', { state: 'bar' }) }}
 
+    <h2>Complex input</h2>
+    {{ component('complex_input', { prefix: 'my-prefix: ', date: date() }) }}
+
     {% if post %}
         <h2>PostEdit component</h2>
         {{ component('edit_post', { post: post }) }}

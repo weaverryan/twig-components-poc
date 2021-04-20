@@ -1,0 +1,12 @@
+<div>
+    <input
+            type="text"
+            value="{{ this.value }}"
+            data-model="value"
+            data-action="live#update"
+    />
+    {{ this.prefixedValue }}
+    <br>
+    Created: {{ this.date.format('r') }} <br>
+    Last updated: {{ date().format('r') }}
+</div>
