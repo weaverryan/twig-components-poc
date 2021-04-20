@@ -42,6 +42,7 @@ services:
     # TODO: when moving to bundle, use registerForAutoconfiguration for PropertyHydrator
     App\Twig\ComponentHydrator:
         $propertyHydrators: !tagged_iterator twig.component.property_hydrator
+        $secret: '%kernel.secret%'
 
     # TODO: when moving to bundle, use registerForAutoconfiguration for Component
     App\Twig\ComponentFactory:
