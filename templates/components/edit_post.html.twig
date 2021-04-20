@@ -1,0 +1,8 @@
+<div>
+    Post ID: {{ this.post.id }}<br>
+    Post Title: {{ this.post.title }}<br>
+    Last Refreshed: {{ date()|date('r') }}<br>
+    <button
+        data-action="live#$render"
+    >Refresh</button>
+</div>

@@ -1,7 +1,7 @@
 <div
     data-controller="live"
     data-live-component-value="{{ name }}"
-    data-live-data-value="{{ data }}"
+    data-live-data-value="{{ data is empty ? '{}' : data|json_encode }}"
 >
     {{ rendered|raw }}
 </div>

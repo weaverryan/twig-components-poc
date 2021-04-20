@@ -2,7 +2,6 @@
 
 namespace App\Twig;
 
-use Symfony\Component\Serializer\SerializerInterface;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -13,12 +12,12 @@ use Twig\TwigFunction;
 final class ComponentExtension extends AbstractExtension
 {
     private ComponentFactory $factory;
-    private SerializerInterface $serializer;
+    private ComponentHydrator $hydrator;
 
-    public function __construct(ComponentFactory $factory, SerializerInterface $serializer)
+    public function __construct(ComponentFactory $factory, ComponentHydrator $hydrator)
     {
         $this->factory = $factory;
-        $this->serializer = $serializer;
+        $this->hydrator = $hydrator;
     }
 
     public function getFunctions(): array
@@ -37,14 +36,10 @@ final class ComponentExtension extends AbstractExtension
             return $rendered;
         }
 
-        // TODO: this serializes methods w/o properties - how to avoid
-        // TODO: our own serializer/dehydrator
-        $serialized = $this->serializer->serialize($component, 'json');
-
         return $env->render('components/live_component.html.twig', [
             'component' => $component,
             'name' => $name,
-            'data' => $serialized,
+            'data' => $this->hydrator->dehydrate($component),
             'rendered' => $rendered,
         ]);
     }
