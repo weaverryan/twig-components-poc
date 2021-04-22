@@ -2,6 +2,8 @@
 
 namespace App\Twig;
 
+use App\Twig\Attribute\State;
+use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
 /**
@@ -13,15 +15,17 @@ final class ComponentHydrator
 
     private iterable $propertyHydrators;
     private PropertyAccessorInterface $propertyAccessor;
+    private Reader $annotationReader;
     private string $secret;
 
     /**
      * @param PropertyHydrator[] $propertyHydrators
      */
-    public function __construct(iterable $propertyHydrators, PropertyAccessorInterface $propertyAccessor, string $secret)
+    public function __construct(iterable $propertyHydrators, PropertyAccessorInterface $propertyAccessor, Reader $annotationReader, string $secret)
     {
         $this->propertyHydrators = $propertyHydrators;
         $this->propertyAccessor = $propertyAccessor;
+        $this->annotationReader = $annotationReader;
         $this->secret = $secret;
     }
 
@@ -32,15 +36,17 @@ final class ComponentHydrator
         $data = [];
         $stateProperties = [];
 
-        foreach (self::reflectionProperties($component) as $property) {
+        foreach ($this->reflectionProperties($component) as $property) {
             // TODO: allow user to take over dehydration on a per-property basis
 
-            if (str_contains((string) $property->getDocComment(), '@WritableState')) {
+            if ($this->stateFor($property)->isWritable()) {
                 // writable state uses property access to get value
                 // TODO: improve error message if not readable
                 $value = $this->propertyAccessor->getValue($component, $property->getName());
             } else {
                 // non-writable state uses reflection to get value
+                $property->setAccessible(true);
+
                 $value = $property->getValue($component);
                 $stateProperties[] = $property->getName();
             }
@@ -65,8 +71,8 @@ final class ComponentHydrator
          * be security implications to doing it after (component setter's could have
          * side effects).
          */
-        foreach (self::reflectionProperties($component) as $property) {
-            if (str_contains((string) $property->getDocComment(), '@State')) {
+        foreach ($this->reflectionProperties($component) as $property) {
+            if (!$this->stateFor($property)->isWritable()) {
                 $stateProperties[] = $property->getName();
             }
         }
@@ -75,7 +81,7 @@ final class ComponentHydrator
 
         unset($data[self::CHECKSUM_KEY]);
 
-        foreach (self::reflectionProperties($component) as $property) {
+        foreach ($this->reflectionProperties($component) as $property) {
             $name = $property->getName();
 
             if (!\array_key_exists($name, $data)) {
@@ -87,11 +93,13 @@ final class ComponentHydrator
 
             // TODO: allow user to take over hydration on a per-property basis
 
-            if (str_contains((string) $property->getDocComment(), '@WritableState')) {
+            if ($this->stateFor($property)->isWritable()) {
                 // writable state uses property access to set value
                 // TODO: improve error message if not writable
                 $this->propertyAccessor->setValue($component, $name, $value);
             } else {
+                $property->setAccessible(true);
+
                 $property->setValue($component, $value);
             }
         }
@@ -176,30 +184,23 @@ final class ComponentHydrator
      *
      * @return \ReflectionProperty[]
      */
-    private static function reflectionProperties(object $object): iterable
+    private function reflectionProperties(object $object): iterable
     {
         $class = $object instanceof \ReflectionClass ? $object : new \ReflectionClass($object);
 
         foreach ($class->getProperties() as $property) {
-            // TODO: use real annotation/attribute
-            $doc = (string) $property->getDocComment();
-
-            if (str_contains($doc, '@WritableState')) {
-                yield $property;
-
-                continue;
-            }
-
-            if (str_contains($doc, '@State')) {
-                // ensure non-writable state is accessible
-                $property->setAccessible(true);
-
+            if (null !== $this->stateFor($property)) {
                 yield $property;
             }
         }
 
         if ($parent = $class->getParentClass()) {
-            yield from self::reflectionProperties($parent);
+            yield from $this->reflectionProperties($parent);
         }
+    }
+
+    private function stateFor(\ReflectionProperty $property): ?State
+    {
+        return $this->annotationReader->getPropertyAnnotation($property, State::class);
     }
 }
