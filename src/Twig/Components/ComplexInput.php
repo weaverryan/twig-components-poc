@@ -16,7 +16,7 @@ final class ComplexInput extends LiveComponent
     public string $value = '';
 
     /**
-     * @State
+     * @State(hydrateWith="hydratePrefixer()", dehydrateWith="dehydratePrefixer")
      */
     public Prefixer $prefixer;
 
@@ -33,5 +33,15 @@ final class ComplexInput extends LiveComponent
     public function prefixedValue(): string
     {
         return ($this->prefixer)($this->value);
+    }
+
+    public function hydratePrefixer(string $prefix): Prefixer
+    {
+        return new Prefixer($prefix);
+    }
+
+    public function dehydratePrefixer(): string
+    {
+        return $this->prefixer->prefix();
     }
 }

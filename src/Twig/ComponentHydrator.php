@@ -31,27 +31,36 @@ final class ComponentHydrator
 
     public function dehydrate(LiveComponent $component): array
     {
-        // TODO: allow user to totally take over (via interface on component?)
-
         $data = [];
         $stateProperties = [];
 
         foreach ($this->reflectionProperties($component) as $property) {
-            // TODO: allow user to take over dehydration on a per-property basis
+            $state = $this->stateFor($property);
+            $name = $property->getName();
 
-            if ($this->stateFor($property)->isWritable()) {
+            if (!$state->isWritable()) {
+                $stateProperties[] = $name;
+            }
+
+            if ($method = $state->dehydrateMethod()) {
+                // TODO: Error checking
+                $data[$name] = $component->$method();
+
+                continue;
+            }
+
+            if ($state->isWritable()) {
                 // writable state uses property access to get value
                 // TODO: improve error message if not readable
-                $value = $this->propertyAccessor->getValue($component, $property->getName());
+                $value = $this->propertyAccessor->getValue($component, $name);
             } else {
                 // non-writable state uses reflection to get value
                 $property->setAccessible(true);
 
                 $value = $property->getValue($component);
-                $stateProperties[] = $property->getName();
             }
 
-            $data[$property->getName()] = $this->dehydrateProperty($value);
+            $data[$name] = $this->dehydrateProperty($value);
         }
 
         $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $stateProperties);
@@ -61,8 +70,6 @@ final class ComponentHydrator
 
     public function hydrate(LiveComponent $component, array $data): void
     {
-        // TODO: allow user to totally take over (via interface on component?)
-
         $stateProperties = [];
 
         /*
@@ -82,6 +89,7 @@ final class ComponentHydrator
         unset($data[self::CHECKSUM_KEY]);
 
         foreach ($this->reflectionProperties($component) as $property) {
+            $state = $this->stateFor($property);
             $name = $property->getName();
 
             if (!\array_key_exists($name, $data)) {
@@ -89,11 +97,14 @@ final class ComponentHydrator
                 continue;
             }
 
-            $value = $this->hydrateProperty($property, $data[$name]);
+            if ($method = $state->hydrateMethod()) {
+                // TODO: Error checking
+                $value = $component->$method($data[$name]);
+            } else {
+                $value = $this->hydrateProperty($property, $data[$name]);
+            }
 
-            // TODO: allow user to take over hydration on a per-property basis
-
-            if ($this->stateFor($property)->isWritable()) {
+            if ($state->isWritable()) {
                 // writable state uses property access to set value
                 // TODO: improve error message if not writable
                 $this->propertyAccessor->setValue($component, $name, $value);
