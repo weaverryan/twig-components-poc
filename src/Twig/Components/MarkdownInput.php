@@ -2,6 +2,7 @@
 
 namespace App\Twig\Components;
 
+use App\Twig\Attribute\State;
 use App\Twig\LiveComponent;
 
 /**
@@ -20,7 +21,7 @@ final class MarkdownInput extends LiveComponent
     public string $label;
 
     /**
-     * @WritableState
+     * @State(writable=true)
      */
     public string $value = '';
 
