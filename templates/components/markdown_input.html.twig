@@ -64,7 +64,22 @@
     </div>
     <div>
         <strong>Preview</strong>
-        <div style="padding: 30px; background-color: lightcyan">
+        <div class="alert alert-success">
+            <span live:loading>
+                Reloading...
+            </span>
+            <span live:loading="hide">
+                Loaded!
+            </span>
+        </div>
+        <div
+            {#
+            With a modifier?
+            live:loading-class="remove->bg-gray"
+            #}
+            class="markdown-preview"
+            live:loading-class="low-opacity"
+        >
             {{ this.value|markdown_to_html }}
         </div>
     </div>

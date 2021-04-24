@@ -65,6 +65,8 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             [$component, $action]
         );
         $request->attributes->set('_component', $component);
+        // to make things more fun, sleep randomly from 100-1000ms
+        usleep(rand(100000, 1000000));
     }
 
     public function onKernelView(ViewEvent $event)

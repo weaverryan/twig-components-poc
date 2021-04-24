@@ -26,6 +26,13 @@ export default class extends Controller {
      */
     renderPromiseStack = new PromiseStack();
 
+    connect() {
+        // hide "loading" elements to begin with
+        // TODO: this might be done with CSS, as Livewire does
+        // e.g. [wire\:loading] {display: none;}
+        this._onLoadingFinish();
+    }
+
     /**
      * Called to update one piece of the model
      */
@@ -52,6 +59,9 @@ export default class extends Controller {
             // the given data
             data: JSON.stringify(this.dataValue),
         });
+
+        // todo: make this work for specific actions, or models
+        this._onLoadingStart();
         const thisPromise = fetch(`/components?${params.toString()}`);
         this.renderPromiseStack.addPromise(thisPromise);
         thisPromise.then(async (response) => {
@@ -64,6 +74,7 @@ export default class extends Controller {
             const debugData = await response.json();
             if (isMostRecent) {
                 this._processRerender(debugData)
+                this._onLoadingFinish();
             }
         })
     }
@@ -103,6 +114,107 @@ export default class extends Controller {
 
         // "data" holds the new, updated data
         this.dataValue = data.data;
+    }
+
+    _onLoadingStart() {
+        this._getLoadingElements().forEach(({ element, action, useOnLoading, ...options }) => {
+            switch (action) {
+                case 'display':
+                    if (useOnLoading) {
+                        this._showElement(element);
+                    } else {
+                        this._hideElement(element);
+                    }
+
+                    break;
+                case 'class':
+                    if (useOnLoading) {
+                        this._addClass(element, options.className);
+                    } else {
+                        this._removeClass(element, options.className);
+                    }
+
+                    break;
+                default:
+                    throw new Error(`Unknown action ${action}`);
+            }
+        });
+    }
+
+    _onLoadingFinish() {
+        this._getLoadingElements().forEach(({ element, action, useOnLoading, ...options }) => {
+            switch (action) {
+                case 'display':
+                    if (useOnLoading) {
+                        this._hideElement(element);
+                    } else {
+                        this._showElement(element);
+                    }
+
+                    break;
+                case 'class':
+                    if (useOnLoading) {
+                        this._removeClass(element, options.className);
+                    } else {
+                        this._addClass(element, options.className);
+                    }
+
+                    break;
+                default:
+                    throw new Error(`Unknown action ${action}`);
+            }
+        });
+    }
+
+    _getLoadingElements() {
+        const elements = [];
+
+        this.element.querySelectorAll('[live\\:loading]').forEach((element => {
+            const options = element.getAttribute('live:loading');
+
+            // data-live-loading with no value OR ="show" -> "show on loading"
+            const useOnLoading = options == '' || options === 'show';
+
+            elements.push({
+                element,
+                action: 'display',
+                useOnLoading,
+            });
+        }));
+
+        this.element.querySelectorAll('[live\\:loading-class]').forEach((element => {
+            const className = element.getAttribute('live:loading-class');
+
+            elements.push({
+                element,
+                action: 'class',
+                // TODO - allow a modifier, like
+                // live:loading-class="remove->bg-gray"
+                // to allow us to HIDE this class on loading
+                useOnLoading: true,
+                className,
+            });
+        }));
+
+        return elements;
+    }
+
+    _showElement(element) {
+        // TODO - allow different "display" types
+        element.style.display = 'inline-block';
+    }
+
+    _hideElement(element) {
+        element.style.display = 'none';
+    }
+
+    _addClass(element, className) {
+        // todo - do we need to allow multiple classes?
+        element.classList.add(className);
+    }
+
+    _removeClass(element, className) {
+        element.classList.remove(className);
     }
 }
 
