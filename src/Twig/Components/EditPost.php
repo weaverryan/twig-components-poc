@@ -3,7 +3,7 @@
 namespace App\Twig\Components;
 
 use App\Entity\Post;
-use App\Twig\Attribute\State;
+use App\Twig\Attribute\LiveProp;
 use App\Twig\LiveComponent;
 
 /**
@@ -12,7 +12,7 @@ use App\Twig\LiveComponent;
 final class EditPost extends LiveComponent
 {
     /**
-     * @State
+     * @LiveProp(readonly=true)
      */
     public Post $post;
 }

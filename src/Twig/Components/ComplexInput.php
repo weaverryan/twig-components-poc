@@ -2,7 +2,7 @@
 
 namespace App\Twig\Components;
 
-use App\Twig\Attribute\State;
+use App\Twig\Attribute\LiveProp;
 use App\Twig\LiveComponent;
 
 /**
@@ -11,17 +11,17 @@ use App\Twig\LiveComponent;
 final class ComplexInput extends LiveComponent
 {
     /**
-     * @State(writable=true)
+     * @LiveProp
      */
     public string $value = '';
 
     /**
-     * @State(hydrateWith="hydratePrefixer()", dehydrateWith="dehydratePrefixer")
+     * @LiveProp(readonly=true, hydrateWith="hydratePrefixer()", dehydrateWith="dehydratePrefixer")
      */
     public Prefixer $prefixer;
 
     /**
-     * @State
+     * @LiveProp(readonly=true)
      */
     public \DateTime $date;
 

@@ -6,22 +6,22 @@ namespace App\Twig\Attribute;
  * @Annotation
  * @Target("PROPERTY")
  */
-final class State
+final class LiveProp
 {
-    private bool $writable;
+    private bool $readonly;
     private ?string $hydrateWith;
     private ?string $dehydrateWith;
 
     public function __construct(array $values)
     {
-        $this->writable = $values['writable'] ?? false;
+        $this->readonly = $values['readonly'] ?? false;
         $this->hydrateWith = $values['hydrateWith'] ?? null;
         $this->dehydrateWith = $values['dehydrateWith'] ?? null;
     }
 
-    public function isWritable(): bool
+    public function isReadonly(): bool
     {
-        return $this->writable;
+        return $this->readonly;
     }
 
     public function hydrateMethod(): ?string
