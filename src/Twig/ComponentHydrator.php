@@ -2,7 +2,7 @@
 
 namespace App\Twig;
 
-use App\Twig\Attribute\State;
+use App\Twig\Attribute\LiveProp;
 use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
@@ -32,64 +32,64 @@ final class ComponentHydrator
     public function dehydrate(LiveComponent $component): array
     {
         $data = [];
-        $stateProperties = [];
+        $readonlyProperties = [];
 
         foreach ($this->reflectionProperties($component) as $property) {
-            $state = $this->stateFor($property);
+            $liveProp = $this->livePropFor($property);
             $name = $property->getName();
 
-            if (!$state->isWritable()) {
-                $stateProperties[] = $name;
+            if ($liveProp->isReadonly()) {
+                $readonlyProperties[] = $name;
             }
 
-            if ($method = $state->dehydrateMethod()) {
+            if ($method = $liveProp->dehydrateMethod()) {
                 // TODO: Error checking
                 $data[$name] = $component->$method();
 
                 continue;
             }
 
-            if ($state->isWritable()) {
-                // writable state uses property access to get value
-                // TODO: improve error message if not readable
-                $value = $this->propertyAccessor->getValue($component, $name);
-            } else {
-                // non-writable state uses reflection to get value
+            if ($liveProp->isReadonly()) {
+                // readonly properties uses reflection to get value
                 $property->setAccessible(true);
 
                 $value = $property->getValue($component);
+            } else {
+                // writable properties uses property access to get value
+                // TODO: improve error message if not readable
+                $value = $this->propertyAccessor->getValue($component, $name);
             }
 
             $data[$name] = $this->dehydrateProperty($value);
         }
 
-        $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $stateProperties);
+        $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $readonlyProperties);
 
         return $data;
     }
 
     public function hydrate(LiveComponent $component, array $data): void
     {
-        $stateProperties = [];
+        $readonlyProperties = [];
 
         /*
-         * Determine state properties for checksum verification. We need to do this
+         * Determine readonly properties for checksum verification. We need to do this
          * before setting properties on the component. It is unlikely but there could
          * be security implications to doing it after (component setter's could have
          * side effects).
          */
         foreach ($this->reflectionProperties($component) as $property) {
-            if (!$this->stateFor($property)->isWritable()) {
-                $stateProperties[] = $property->getName();
+            if ($this->livePropFor($property)->isReadonly()) {
+                $readonlyProperties[] = $property->getName();
             }
         }
 
-        $this->verifyChecksum($data, $stateProperties);
+        $this->verifyChecksum($data, $readonlyProperties);
 
         unset($data[self::CHECKSUM_KEY]);
 
         foreach ($this->reflectionProperties($component) as $property) {
-            $state = $this->stateFor($property);
+            $liveProp = $this->livePropFor($property);
             $name = $property->getName();
 
             if (!\array_key_exists($name, $data)) {
@@ -97,43 +97,44 @@ final class ComponentHydrator
                 continue;
             }
 
-            if ($method = $state->hydrateMethod()) {
+            if ($method = $liveProp->hydrateMethod()) {
                 // TODO: Error checking
                 $value = $component->$method($data[$name]);
             } else {
                 $value = $this->hydrateProperty($property, $data[$name]);
             }
 
-            if ($state->isWritable()) {
-                // writable state uses property access to set value
-                // TODO: improve error message if not writable
-                $this->propertyAccessor->setValue($component, $name, $value);
-            } else {
+            if ($liveProp->isReadonly()) {
+                // readonly properties uses reflection to set value
                 $property->setAccessible(true);
 
                 $property->setValue($component, $value);
+            } else {
+                // writable properties uses property access to set value
+                // TODO: improve error message if not writable
+                $this->propertyAccessor->setValue($component, $name, $value);
             }
         }
     }
 
-    private function computeChecksum(array $data, array $stateProperties): string
+    private function computeChecksum(array $data, array $readonlyProperties): string
     {
-        // filter to only state properties
-        $state = array_filter($data, static fn($key) => \in_array($key, $stateProperties, true), ARRAY_FILTER_USE_KEY);
+        // filter to only readonly properties
+        $properties = array_filter($data, static fn($key) => \in_array($key, $readonlyProperties, true), ARRAY_FILTER_USE_KEY);
 
         // sort so it is always consistent (frontend could have re-ordered data)
-        \ksort($state);
+        \ksort($properties);
 
-        return \base64_encode(\hash_hmac('sha256', \json_encode($state, \JSON_THROW_ON_ERROR), $this->secret, true));
+        return \base64_encode(\hash_hmac('sha256', \json_encode($properties, \JSON_THROW_ON_ERROR), $this->secret, true));
     }
 
-    private function verifyChecksum(array $data, array $stateProperties): void
+    private function verifyChecksum(array $data, array $readonlyProperties): void
     {
         if (!\array_key_exists(self::CHECKSUM_KEY, $data)) {
             throw new \RuntimeException('No checksum!');
         }
 
-        if (!hash_equals($this->computeChecksum($data, $stateProperties), $data[self::CHECKSUM_KEY])) {
+        if (!hash_equals($this->computeChecksum($data, $readonlyProperties), $data[self::CHECKSUM_KEY])) {
             throw new \RuntimeException('Invalid checksum!');
         }
     }
@@ -200,7 +201,7 @@ final class ComponentHydrator
         $class = $object instanceof \ReflectionClass ? $object : new \ReflectionClass($object);
 
         foreach ($class->getProperties() as $property) {
-            if (null !== $this->stateFor($property)) {
+            if (null !== $this->livePropFor($property)) {
                 yield $property;
             }
         }
@@ -210,8 +211,8 @@ final class ComponentHydrator
         }
     }
 
-    private function stateFor(\ReflectionProperty $property): ?State
+    private function livePropFor(\ReflectionProperty $property): ?LiveProp
     {
-        return $this->annotationReader->getPropertyAnnotation($property, State::class);
+        return $this->annotationReader->getPropertyAnnotation($property, LiveProp::class);
     }
 }

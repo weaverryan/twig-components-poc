@@ -2,7 +2,7 @@
 
 namespace App\Twig\Components;
 
-use App\Twig\Attribute\State;
+use App\Twig\Attribute\LiveProp;
 use App\Twig\LiveComponent;
 
 /**
@@ -11,7 +11,7 @@ use App\Twig\LiveComponent;
 final class Date extends LiveComponent
 {
     /**
-     * @State
+     * @LiveProp(readonly=true)
      */
     private \DateTimeInterface $created;
 
