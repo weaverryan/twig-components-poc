@@ -37,9 +37,7 @@ re-rendering or an action is processing. For example:
 
 ```twig
 <!-- show only when the component is loading -->
-<span
-    data-live-loading
->Loading</span>
+<span data-loading>Loading</span>
 ```
 
 Or, to *hide* an element while the component is loading:
@@ -47,26 +45,37 @@ Or, to *hide* an element while the component is loading:
 ```twig
 <!-- hide when the component is loading -->
 <span
-    data-live-loading="hide"
+    data-loading="hide"
 >Saved!</span>
 ```
 
-#### Adding and Removing Classes
+#### Adding and Removing Classes or Attributes
 
 Instead of hiding or showing an entire element, you could
 add or remove a class:
 
 ```twig
-<div
-    data-live-loading="addClass->opacity-50"
->{{ someValue }}
+<!-- add this class when loading -->
+<div data-loading="addClass->opacity-50">...</div>
+
+<!-- remove this class when loading -->
+<div data-loading="removeClass->opacity-50">...</div>
+
+<!-- add multiple classes when loading -->
+<div data-loading="addClass->(opacity-50 disabled)">...</div>
 ```
 
-Or remove a class during loading:
+Sometimes you may want to add or remove an attribute when loading.
+That can be accomplished with `addAttribute` or `removeAttribute`:
 
 ```twig
-<div
-    class="opacity-50"
-    data-live-loading="removeClass->opacity-50"
->{{ someValue }}
+<!-- add the "disabled" attribute when loading -->
+<div data-loading="addAttribute->disabled">...</div>
+```
+
+You can also combine any number of directives by separating them
+with a space:
+
+```twig
+<div data-loading="addClass->opacity-50 addAttribute->disabled">...</div>
 ```
