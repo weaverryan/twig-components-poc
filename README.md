@@ -56,13 +56,13 @@ add or remove a class:
 
 ```twig
 <!-- add this class when loading -->
-<div data-loading="addClass->opacity-50">...</div>
+<div data-loading="addClass(opacity-50)">...</div>
 
 <!-- remove this class when loading -->
-<div data-loading="removeClass->opacity-50">...</div>
+<div data-loading="removeClass(opacity-50)">...</div>
 
 <!-- add multiple classes when loading -->
-<div data-loading="addClass->(opacity-50 disabled)">...</div>
+<div data-loading="addClass(opacity-50 disabled)">...</div>
 ```
 
 Sometimes you may want to add or remove an attribute when loading.
