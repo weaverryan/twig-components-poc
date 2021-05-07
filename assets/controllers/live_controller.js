@@ -163,11 +163,11 @@ export default class extends Controller {
                 break;
 
             case 'addAttribute':
-                throw new Error('TODO');
+                this._addAttribute(element, args);
                 break;
 
             case 'removeAttribute':
-                throw new Error('TODO');
+                this._removeAttribute(element, args);
                 break;
 
             default:
@@ -207,12 +207,23 @@ export default class extends Controller {
     }
 
     _addClass(element, classes) {
-        // todo - do we need to allow multiple classes?
         element.classList.add(...classes);
     }
 
     _removeClass(element, classes) {
         element.classList.remove(...classes);
+    }
+
+    _addAttribute(element, attributes) {
+        attributes.forEach((attribute) => {
+            element.setAttribute(attribute, '');
+        })
+    }
+
+    _removeAttribute(element, attributes) {
+        attributes.forEach((attribute) => {
+            element.removeAttribute(attribute);
+        })
     }
 }
 
