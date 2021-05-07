@@ -19,7 +19,7 @@ describe('instructions_parser', () => {
         expect(instructions).toHaveLength(1);
         expect(instructions[0]).toEqual({
             action: 'hide',
-            arguments: []
+            args: []
         })
     });
 
@@ -28,7 +28,7 @@ describe('instructions_parser', () => {
         expect(instructions).toHaveLength(1);
         expect(instructions[0]).toEqual({
             action: 'addClass',
-            arguments: ['opacity-50']
+            args: ['opacity-50']
         })
     });
 
@@ -37,7 +37,7 @@ describe('instructions_parser', () => {
         expect(instructions).toHaveLength(1);
         expect(instructions[0]).toEqual({
             action: 'addClass',
-            arguments: ['opacity-50', 'disabled']
+            args: ['opacity-50', 'disabled']
         })
     });
 
@@ -46,11 +46,11 @@ describe('instructions_parser', () => {
         expect(instructions).toHaveLength(2);
         expect(instructions[0]).toEqual({
             action: 'addClass',
-            arguments: ['opacity-50']
+            args: ['opacity-50']
         })
         expect(instructions[1]).toEqual({
             action: 'addAttribute',
-            arguments: ['disabled']
+            args: ['disabled']
         })
     });
 
@@ -59,15 +59,15 @@ describe('instructions_parser', () => {
         expect(instructions).toHaveLength(3);
         expect(instructions[0]).toEqual({
             action: 'hide',
-            arguments: []
+            args: []
         })
         expect(instructions[1]).toEqual({
             action: 'addClass',
-            arguments: ['opacity-50', 'disabled']
+            args: ['opacity-50', 'disabled']
         })
         expect(instructions[2]).toEqual({
             action: 'addAttribute',
-            arguments: ['disabled']
+            args: ['disabled']
         })
     });
 

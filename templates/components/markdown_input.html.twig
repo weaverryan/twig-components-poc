@@ -65,20 +65,16 @@
     <div>
         <strong>Preview</strong>
         <div class="alert alert-success">
-            <span live:loading>
+            <span data-loading>
                 Reloading...
             </span>
-            <span live:loading="hide">
+            <span data-loading="hide">
                 Loaded!
             </span>
         </div>
         <div
-            {#
-            With a modifier?
-            live:loading-class="remove->bg-gray"
-            #}
             class="markdown-preview"
-            live:loading-class="low-opacity"
+            data-loading="addClass(low-opacity bg-maroon)"
         >
             {{ this.value|markdown_to_html }}
         </div>

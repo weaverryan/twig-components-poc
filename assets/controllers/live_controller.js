@@ -1,5 +1,6 @@
 import { Controller } from 'stimulus';
 import morphdom from 'morphdom';
+import { parseInstructions } from '../src/instructions';
 
 export default class extends Controller {
     static values = {
@@ -117,86 +118,83 @@ export default class extends Controller {
     }
 
     _onLoadingStart() {
-        this._getLoadingElements().forEach(({ element, action, useOnLoading, ...options }) => {
-            switch (action) {
-                case 'display':
-                    if (useOnLoading) {
-                        this._showElement(element);
-                    } else {
-                        this._hideElement(element);
-                    }
-
-                    break;
-                case 'class':
-                    if (useOnLoading) {
-                        this._addClass(element, options.className);
-                    } else {
-                        this._removeClass(element, options.className);
-                    }
-
-                    break;
-                default:
-                    throw new Error(`Unknown action ${action}`);
-            }
-        });
+        this._handleLoadingToggle(true);
     }
 
     _onLoadingFinish() {
-        this._getLoadingElements().forEach(({ element, action, useOnLoading, ...options }) => {
-            switch (action) {
-                case 'display':
-                    if (useOnLoading) {
-                        this._hideElement(element);
-                    } else {
-                        this._showElement(element);
-                    }
+        this._handleLoadingToggle(false);
+    }
 
-                    break;
-                case 'class':
-                    if (useOnLoading) {
-                        this._removeClass(element, options.className);
-                    } else {
-                        this._addClass(element, options.className);
-                    }
-
-                    break;
-                default:
-                    throw new Error(`Unknown action ${action}`);
-            }
+    _handleLoadingToggle(isLoading) {
+        this._getLoadingInstructions().forEach(({ element, instructions }) => {
+            instructions.forEach(({action, args}) => {
+                this._handleLoadingInstruction(element, isLoading, action, args)
+            });
         });
     }
 
-    _getLoadingElements() {
-        const elements = [];
+    /**
+     * @param {Element} element
+     * @param {boolean} isLoading
+     * @param {string} action
+     * @param {Array} args
+     * @private
+     */
+    _handleLoadingInstruction(element, isLoading, action, args) {
+        const finalAction = parseLoadingAction(action, isLoading);
 
-        this.element.querySelectorAll('[live\\:loading]').forEach((element => {
-            const options = element.getAttribute('live:loading');
+        switch (finalAction) {
+            case 'show':
+                // todo error on args
+                this._showElement(element);
+                break;
 
-            // data-live-loading with no value OR ="show" -> "show on loading"
-            const useOnLoading = options == '' || options === 'show';
+            case 'hide':
+                // todo error on args
+                this._hideElement(element);
+                break;
 
-            elements.push({
+            case 'addClass':
+                this._addClass(element, args);
+                break;
+
+            case 'removeClass':
+                this._removeClass(element, args);
+                break;
+
+            case 'addAttribute':
+                throw new Error('TODO');
+                break;
+
+            case 'removeAttribute':
+                throw new Error('TODO');
+                break;
+
+            default:
+                throw new Error(`Unknown data-loading action "${finalAction}"`);
+        }
+    }
+
+    _getLoadingInstructions() {
+        const loadingInstructions = [];
+
+        this.element.querySelectorAll('[data-loading]').forEach((element => {
+            const instructions = parseInstructions(element.dataset.loading, 'show');
+            // make data-loading === data-loading="show"
+            if (instructions.length === 0) {
+                instructions.push({
+                    action: 'show',
+                    args: [],
+                })
+            }
+
+            loadingInstructions.push({
                 element,
-                action: 'display',
-                useOnLoading,
+                instructions,
             });
         }));
 
-        this.element.querySelectorAll('[live\\:loading-class]').forEach((element => {
-            const className = element.getAttribute('live:loading-class');
-
-            elements.push({
-                element,
-                action: 'class',
-                // TODO - allow a modifier, like
-                // live:loading-class="remove->bg-gray"
-                // to allow us to HIDE this class on loading
-                useOnLoading: true,
-                className,
-            });
-        }));
-
-        return elements;
+        return loadingInstructions;
     }
 
     _showElement(element) {
@@ -208,13 +206,13 @@ export default class extends Controller {
         element.style.display = 'none';
     }
 
-    _addClass(element, className) {
+    _addClass(element, classes) {
         // todo - do we need to allow multiple classes?
-        element.classList.add(className);
+        element.classList.add(...classes);
     }
 
-    _removeClass(element, className) {
-        element.classList.remove(className);
+    _removeClass(element, classes) {
+        element.classList.remove(...classes);
     }
 }
 
@@ -257,4 +255,23 @@ class PromiseStack {
     findPromiseIndex(promise) {
         return this.stack.findIndex((item) => item === promise);
     }
+}
+
+const parseLoadingAction = function(action, isLoading) {
+    switch (action) {
+        case 'show':
+            return isLoading ? 'show' : 'hide';
+        case 'hide':
+            return isLoading ? 'hide' : 'show';
+        case 'addClass':
+            return isLoading ? 'addClass' : 'removeClass';
+        case 'removeClass':
+            return isLoading ? 'removeClass' : 'addClass';
+        case 'addAttribute':
+            return isLoading ? 'addAttribute' : 'removeAttribute';
+        case 'removeAttribute':
+            return isLoading ? 'removeAttribute' : 'addAttribute';
+    }
+
+    throw new Error(`Unknown data-loading action "${action}"`);
 }

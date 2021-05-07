@@ -18,6 +18,13 @@
     padding: 30px;
     background-color: lightcyan;
 }
+.markdown-preview.bg-maroon {
+    background-color: #E8E0FF;
+}
 .low-opacity {
     opacity: .2;
+}
+
+[data-loading=""], [data-loading="show"] {
+    display: none;
 }

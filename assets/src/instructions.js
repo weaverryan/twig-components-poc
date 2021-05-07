@@ -24,7 +24,7 @@ export function parseInstructions(content) {
     const pushInstruction = function() {
         instructions.push({
             action: currentActionName,
-            arguments: currentArguments,
+            args: currentArguments,
         });
         currentActionName = '';
         currentArgumentName = '';
