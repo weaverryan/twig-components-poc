@@ -1,5 +1,7 @@
 import { Controller } from 'stimulus';
 import morphdom from 'morphdom';
+import { parseInstructions } from '../src/instructions';
+import '../styles/live.css';
 
 export default class extends Controller {
     static values = {
@@ -25,6 +27,13 @@ export default class extends Controller {
      * @type {PromiseStack}
      */
     renderPromiseStack = new PromiseStack();
+
+    connect() {
+        // hide "loading" elements to begin with
+        // TODO: this might be done with CSS, as Livewire does
+        // e.g. [wire\:loading] {display: none;}
+        this._onLoadingFinish();
+    }
 
     /**
      * Called to update one piece of the model
@@ -52,6 +61,9 @@ export default class extends Controller {
             // the given data
             data: JSON.stringify(this.dataValue),
         });
+
+        // todo: make this work for specific actions, or models
+        this._onLoadingStart();
         const thisPromise = fetch(`/components?${params.toString()}`);
         this.renderPromiseStack.addPromise(thisPromise);
         thisPromise.then(async (response) => {
@@ -64,6 +76,7 @@ export default class extends Controller {
             const debugData = await response.json();
             if (isMostRecent) {
                 this._processRerender(debugData)
+                this._onLoadingFinish();
             }
         })
     }
@@ -103,6 +116,115 @@ export default class extends Controller {
 
         // "data" holds the new, updated data
         this.dataValue = data.data;
+    }
+
+    _onLoadingStart() {
+        this._handleLoadingToggle(true);
+    }
+
+    _onLoadingFinish() {
+        this._handleLoadingToggle(false);
+    }
+
+    _handleLoadingToggle(isLoading) {
+        this._getLoadingInstructions().forEach(({ element, instructions }) => {
+            instructions.forEach(({action, args}) => {
+                this._handleLoadingInstruction(element, isLoading, action, args)
+            });
+        });
+    }
+
+    /**
+     * @param {Element} element
+     * @param {boolean} isLoading
+     * @param {string} action
+     * @param {Array} args
+     * @private
+     */
+    _handleLoadingInstruction(element, isLoading, action, args) {
+        const finalAction = parseLoadingAction(action, isLoading);
+
+        switch (finalAction) {
+            case 'show':
+                // todo error on args
+                this._showElement(element);
+                break;
+
+            case 'hide':
+                // todo error on args
+                this._hideElement(element);
+                break;
+
+            case 'addClass':
+                this._addClass(element, args);
+                break;
+
+            case 'removeClass':
+                this._removeClass(element, args);
+                break;
+
+            case 'addAttribute':
+                this._addAttribute(element, args);
+                break;
+
+            case 'removeAttribute':
+                this._removeAttribute(element, args);
+                break;
+
+            default:
+                throw new Error(`Unknown data-loading action "${finalAction}"`);
+        }
+    }
+
+    _getLoadingInstructions() {
+        const loadingInstructions = [];
+
+        this.element.querySelectorAll('[data-loading]').forEach((element => {
+            const instructions = parseInstructions(element.dataset.loading, 'show');
+            // make data-loading === data-loading="show"
+            if (instructions.length === 0) {
+                instructions.push({
+                    action: 'show',
+                    args: [],
+                })
+            }
+
+            loadingInstructions.push({
+                element,
+                instructions,
+            });
+        }));
+
+        return loadingInstructions;
+    }
+
+    _showElement(element) {
+        // TODO - allow different "display" types
+        element.style.display = 'inline-block';
+    }
+
+    _hideElement(element) {
+        element.style.display = 'none';
+    }
+
+    _addClass(element, classes) {
+        element.classList.add(...classes);
+    }
+
+    _removeClass(element, classes) {
+        element.classList.remove(...classes);
+    }
+
+    _addAttribute(element, attributes) {
+        attributes.forEach((attribute) => {
+            element.setAttribute(attribute, '');
+        })
+    }
+
+    _removeAttribute(element, attributes) {
+        attributes.forEach((attribute) => {
+            element.removeAttribute(attribute);
+        })
     }
 }
 
@@ -145,4 +267,23 @@ class PromiseStack {
     findPromiseIndex(promise) {
         return this.stack.findIndex((item) => item === promise);
     }
+}
+
+const parseLoadingAction = function(action, isLoading) {
+    switch (action) {
+        case 'show':
+            return isLoading ? 'show' : 'hide';
+        case 'hide':
+            return isLoading ? 'hide' : 'show';
+        case 'addClass':
+            return isLoading ? 'addClass' : 'removeClass';
+        case 'removeClass':
+            return isLoading ? 'removeClass' : 'addClass';
+        case 'addAttribute':
+            return isLoading ? 'addAttribute' : 'removeAttribute';
+        case 'removeAttribute':
+            return isLoading ? 'removeAttribute' : 'addAttribute';
+    }
+
+    throw new Error(`Unknown data-loading action "${action}"`);
 }

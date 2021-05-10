@@ -51,6 +51,7 @@
                 #}
                 data-action="live#updateDefer"
                 rows="{{ this.rows }}"
+                data-loading="addAttribute(disabled)"
             >
                 {{- this.value -}}
             </textarea>
@@ -64,7 +65,18 @@
     </div>
     <div>
         <strong>Preview</strong>
-        <div style="padding: 30px; background-color: lightcyan">
+        <div class="alert alert-success">
+            <span data-loading>
+                Reloading...
+            </span>
+            <span data-loading="hide">
+                Loaded!
+            </span>
+        </div>
+        <div
+            class="markdown-preview"
+            data-loading="addClass(low-opacity bg-maroon)"
+        >
             {{ this.value|markdown_to_html }}
         </div>
     </div>

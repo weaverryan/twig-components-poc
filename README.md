@@ -20,10 +20,62 @@ This is heavily inspired by [Blade Components](https://laravel.com/docs/8.x/blad
 3. Table: [component](https://github.com/kbond/twig-components-poc/blob/master/src/Twig/Components/DataTable.php) - [template](https://github.com/kbond/twig-components-poc/blob/master/templates/components/data_table.html.twig) - [usage](https://github.com/kbond/twig-components-poc/blob/master/templates/main/index.html.twig#L17-L20)
 4. Input: [component](https://github.com/kbond/twig-components-poc/blob/master/src/Twig/Components/Input.php) - [template](https://github.com/kbond/twig-components-poc/blob/master/templates/components/input.html.twig) - [usage](https://github.com/kbond/twig-components-poc/blob/master/templates/main/index.html.twig#L22-L26)
 
-# Future Scope
+## Future Scope
 
 1. Default "slot". It should be possible to have any value within `{% component %}{% endcomponent %}`
 not in a block to be part of the "default slot" (like Vue or [Blade Components](https://laravel.com/docs/8.x/blade#slots)).
 2. `LiveComponent` base class to provide Laravel Livewire-like interactions
 3. `make:component` (`make:component --live`)
 4. "Anonymous" components (just a template) to take advantage of the `attributes()` system
+
+## Documentation
+
+### Loading States
+
+Often, you'll want to show (or hide) an element while a component is
+re-rendering or an action is processing. For example:
+
+```twig
+<!-- show only when the component is loading -->
+<span data-loading>Loading</span>
+```
+
+Or, to *hide* an element while the component is loading:
+
+```twig
+<!-- hide when the component is loading -->
+<span
+    data-loading="hide"
+>Saved!</span>
+```
+
+#### Adding and Removing Classes or Attributes
+
+Instead of hiding or showing an entire element, you could
+add or remove a class:
+
+```twig
+<!-- add this class when loading -->
+<div data-loading="addClass(opacity-50)">...</div>
+
+<!-- remove this class when loading -->
+<div data-loading="removeClass(opacity-50)">...</div>
+
+<!-- add multiple classes when loading -->
+<div data-loading="addClass(opacity-50 disabled)">...</div>
+```
+
+Sometimes you may want to add or remove an attribute when loading.
+That can be accomplished with `addAttribute` or `removeAttribute`:
+
+```twig
+<!-- add the "disabled" attribute when loading -->
+<div data-loading="addAttribute(disabled)">...</div>
+```
+
+You can also combine any number of directives by separating them
+with a space:
+
+```twig
+<div data-loading="addClass(opacity-50) addAttribute(disabled)">...</div>
+```

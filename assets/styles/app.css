@@ -1,1 +1,26 @@
+.alert {
+    padding: 1rem;
+    border-radius: .25rem;
+    margin-bottom: 1rem;
+}
+.alert-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border-color: #badbcc;
+}
+.alert-warning {
+    background-color: #fff3cd;
+    color: #664d03;
+    border-color: #ffecb5;
+}
 
+.markdown-preview {
+    padding: 30px;
+    background-color: lightcyan;
+}
+.markdown-preview.bg-maroon {
+    background-color: #E8E0FF;
+}
+.low-opacity {
+    opacity: .2;
+}
