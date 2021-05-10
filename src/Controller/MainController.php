@@ -15,17 +15,12 @@ class MainController extends AbstractController
      */
     public function index(PostRepository $repo)
     {
-        try {
-            if (!$post = $repo->findOneBy(['slug' => 'lorem-ipsum'])) {
-                $post = new Post();
-                $post->setTitle('Lorem Ipsum');
-                $post->setSlug('lorem-ipsum');
-                $this->getDoctrine()->getManager()->persist($post);
-                $this->getDoctrine()->getManager()->flush();
-            }
-        } catch (Exception $e) {
-            // allow this app to work w/o doctrine being configured
-            $post = null;
+        if (!$post = $repo->findOneBy(['slug' => 'lorem-ipsum'])) {
+            $post = new Post();
+            $post->setTitle('Lorem Ipsum');
+            $post->setSlug('lorem-ipsum');
+            $this->getDoctrine()->getManager()->persist($post);
+            $this->getDoctrine()->getManager()->flush();
         }
 
         return $this->render('main/index.html.twig', [
