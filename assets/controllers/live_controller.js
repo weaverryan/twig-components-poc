@@ -1,6 +1,7 @@
 import { Controller } from 'stimulus';
 import morphdom from 'morphdom';
 import { parseInstructions } from '../src/instructions';
+import '../styles/live.css';
 
 export default class extends Controller {
     static values = {

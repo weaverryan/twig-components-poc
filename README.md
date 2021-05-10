@@ -70,12 +70,12 @@ That can be accomplished with `addAttribute` or `removeAttribute`:
 
 ```twig
 <!-- add the "disabled" attribute when loading -->
-<div data-loading="addAttribute->disabled">...</div>
+<div data-loading="addAttribute(disabled)">...</div>
 ```
 
 You can also combine any number of directives by separating them
 with a space:
 
 ```twig
-<div data-loading="addClass->opacity-50 addAttribute->disabled">...</div>
+<div data-loading="addClass(opacity-50) addAttribute(disabled)">...</div>
 ```

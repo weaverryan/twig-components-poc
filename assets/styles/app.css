@@ -24,7 +24,3 @@
 .low-opacity {
     opacity: .2;
 }
-
-[data-loading=""], [data-loading="show"] {
-    display: none;
-}
