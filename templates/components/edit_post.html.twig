@@ -1,8 +1,21 @@
 <div>
     Post ID: {{ this.post.id }}<br>
+    Post title: <input
+        type="text"
+        data-model="post.title"
+        data-action="live#updateDefer"
+        value="{{ this.post.title }}"
+    ><br>
     Post Title: {{ this.post.title }}<br>
     Last Refreshed: {{ date()|date('r') }}<br>
     <button
         data-action="live#$render"
     >Refresh</button>
+    <button
+        data-action="live#action"
+        data-action-name="save"
+    >Save</button>
+    {% if this.isSaved %}
+        <h5 style="background-color: cyan">Saved!</h5>
+    {% endif %}
 </div>

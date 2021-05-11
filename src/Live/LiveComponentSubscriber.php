@@ -36,7 +36,11 @@ class LiveComponentSubscriber implements EventSubscriberInterface
 
         // TODO - we might read the Content-Type header to see if the input
         // is JSON or form-encoded data
-        $data = \json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
+        if ($request->isMethod('GET')) {
+            $data = \json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
+        } else {
+            $data = \json_decode($request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
+        }
         $component = $this->componentFactory->create($request->query->get('component'));
 
         if (!$component instanceof LiveComponent) {
@@ -60,9 +64,14 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             $action = 'get';
         }
 
+        // TODO: TOTAL hack: to work with the service argument resolver, we need
+        // the _controller to be the ServiceId::methodName() format...
+        // this works because the service is stateful, so when the controller
+        // resolver fetches the service, it gets our modified version
+        $componentServiceId = get_class($component);
         $request->attributes->set(
             '_controller',
-            [$component, $action]
+            sprintf('%s::%s', $componentServiceId, $action)
         );
         $request->attributes->set('_component', $component);
         // to make things more fun, sleep randomly from 100-1000ms

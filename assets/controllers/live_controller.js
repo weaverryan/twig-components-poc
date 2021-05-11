@@ -54,7 +54,15 @@ export default class extends Controller {
         this.$updateModel(model, value, false);
     }
 
+    action(event) {
+        // TODO - add validation for this in case it's missing
+        const action = event.currentTarget.dataset.actionName;
+
+        this._makeRequest('POST', action);
+    }
+
     $render() {
+        this._makeRequest('GET', null);
         const params = new URLSearchParams({
             component: this.componentValue,
             // no "action" here: we are only rendering the model with
@@ -73,9 +81,8 @@ export default class extends Controller {
             }
 
             const isMostRecent = this.renderPromiseStack.removePromise(thisPromise);
-            const debugData = await response.json();
             if (isMostRecent) {
-                this._processRerender(debugData)
+                this._processRerender(await response.json())
                 this._onLoadingFinish();
             }
         })
@@ -99,6 +106,42 @@ export default class extends Controller {
                 this.$render();
             }, this.debounceValue || 150);
         }
+    }
+
+    _makeRequest(method, action) {
+        const params = {
+            component: this.componentValue,
+        };
+
+        if (action) {
+            params.action = action;
+        }
+
+        const fetchOptions = { method };
+        if (method === 'GET') {
+            // TODO: we should query params, not JSON here
+            params.data = JSON.stringify(this.dataValue);
+        } else {
+            fetchOptions.body = JSON.stringify(this.dataValue);
+        }
+
+        // todo: make this work for specific actions, or models
+        this._onLoadingStart();
+        const thisPromise = fetch(`/components?${new URLSearchParams(params).toString()}`, fetchOptions);
+        this.renderPromiseStack.addPromise(thisPromise);
+        thisPromise.then(async (response) => {
+            // if another re-render is scheduled, do not "run it over"
+            // todo: think if this should behave differently for actions
+            if (this.renderDebounceTimeout) {
+                return;
+            }
+
+            const isMostRecent = this.renderPromiseStack.removePromise(thisPromise);
+            if (isMostRecent) {
+                this._processRerender(await response.json())
+                this._onLoadingFinish();
+            }
+        })
     }
 
     /**
