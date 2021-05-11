@@ -2,14 +2,16 @@
 
 namespace App;
 
+use App\Twig\ComponentFactory;
 use App\Twig\LiveComponent;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
-class Kernel extends BaseKernel
+class Kernel extends BaseKernel implements CompilerPassInterface
 {
     use MicroKernelTrait;
 
@@ -42,5 +44,18 @@ class Kernel extends BaseKernel
     {
         $container->registerForAutoconfiguration(LiveComponent::class)
             ->addTag('controller.service_arguments');
+    }
+
+    public function process(ContainerBuilder $container)
+    {
+        $serviceIdMap = [];
+
+        foreach ($container->findTaggedServiceIds('twig.component') as $id => [$params]) {
+            $shortName = $params['short_name'] ?? $container->getDefinition($id)->getClass()::getComponentName();
+
+            $serviceIdMap[$shortName] = $id;
+        }
+
+        $container->getDefinition(ComponentFactory::class)->setArgument(2, $serviceIdMap);
     }
 }

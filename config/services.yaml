@@ -39,6 +39,10 @@ services:
         arguments: ['@serializer.normalizer.datetime']
         tags: [{ name: twig.component.property_hydrator, priority: -100 }]
 
+    foo.bar:
+        class: App\Twig\Components\EditPost
+        tags: [{ name: twig.component, short_name: foo }]
+
     # TODO: when moving to bundle, use registerForAutoconfiguration for PropertyHydrator
     App\Twig\ComponentHydrator:
         $propertyHydrators: !tagged_iterator twig.component.property_hydrator
@@ -46,4 +50,4 @@ services:
 
     # TODO: when moving to bundle, use registerForAutoconfiguration for Component
     App\Twig\ComponentFactory:
-        $components: !tagged_locator { tag: twig.component, index_by: name, default_index_method: getComponentName }
+        $components: !tagged_locator { tag: twig.component, index_by: short_name, default_index_method: getComponentName }
