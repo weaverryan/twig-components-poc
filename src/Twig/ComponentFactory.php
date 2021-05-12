@@ -12,22 +12,33 @@ final class ComponentFactory
 {
     private ServiceLocator $components;
     private PropertyAccessorInterface $propertyAccessor;
+    private array $serviceIdMap;
 
     /**
      * @param Component[]|ServiceLocator $components
      */
-    public function __construct(ServiceLocator $components, PropertyAccessorInterface $propertyAccessor)
+    public function __construct(ServiceLocator $components, PropertyAccessorInterface $propertyAccessor, array $serviceIdMap)
     {
         $this->components = $components;
         $this->propertyAccessor = $propertyAccessor;
+        $this->serviceIdMap = $serviceIdMap;
+    }
+
+    public function serviceIdFor(string $name): string
+    {
+        if (!isset($this->serviceIdMap[$name])) {
+            throw new \InvalidArgumentException('Component not found.');
+        }
+
+        return $this->serviceIdMap[$name];
     }
 
     /**
      * Creates the component and "mounts" it with the passed data.
      */
-    public function createAndMount(string $name, array $data): Component
+    public function create(string $name, array $data): Component
     {
-        $component = $this->create($name);
+        $component = clone $this->components->get($name);
 
         $this->mount($component, $data);
 
@@ -41,15 +52,6 @@ final class ComponentFactory
         }
 
         return $component;
-    }
-
-    /**
-     * Creates the component and returns it in an "unmounted" state.
-     */
-    public function create(string $name): Component
-    {
-        // we clone here to ensure we don't modify state of the object in the DI container
-        return clone $this->components->get($name);
     }
 
     private function mount(Component $component, array &$data): void
