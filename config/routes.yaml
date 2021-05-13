@@ -1,2 +1,4 @@
 live_component:
-    path: /components
+    path: /components/{component}/{action}
+    defaults:
+        action: get

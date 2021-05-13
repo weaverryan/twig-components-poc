@@ -133,6 +133,18 @@ final class ComponentHydrator
         // sort so it is always consistent (frontend could have re-ordered data)
         \ksort($properties);
 
+        // If $data was sent on a request, at this point, it will always all be strings
+        // So, normalize to string to prevent a different checksum between
+        // a "bool true" (when originally computing) and a string "true" later
+        // TODO: maybe this should be normalized before coming here
+        $properties = array_map(function($value) {
+            if (is_bool($value)) {
+                return $value ? 'true' : 'false';
+            }
+
+            return (string) $value;
+        }, $properties);
+
         return \base64_encode(\hash_hmac('sha256', \json_encode($properties, \JSON_THROW_ON_ERROR), $this->secret, true));
     }
 

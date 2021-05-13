@@ -7,7 +7,7 @@ const DEFAULT_DEBOUNCE = '150';
 
 export default class extends Controller {
     static values = {
-        component: String,
+        url: String,
         data: Object,
         /**
          * The Debounce timeout.
@@ -148,12 +148,11 @@ export default class extends Controller {
     }
 
     _makeRequest(method, action) {
-        const params = {
-            component: this.componentValue,
-        };
+        let [url, queryString] = this.urlValue.split('?');
+        const params = new URLSearchParams(queryString || '');
 
         if (action) {
-            params.action = action;
+            url += `/${encodeURIComponent(action)}`;
         }
 
         const fetchOptions = {
@@ -163,15 +162,22 @@ export default class extends Controller {
             },
         };
         if (method === 'GET') {
-            // TODO: we should query params, not JSON here
-            params.data = JSON.stringify(this.dataValue);
+            Object.keys(this.dataValue).forEach((key => {
+                params.set(key, this.dataValue[key]);
+            }));
         } else {
-            fetchOptions.body = JSON.stringify(this.dataValue);
+            const formData = new FormData();
+            // todo - handles files
+            Object.keys(this.dataValue).forEach((key => {
+                formData.append(key, this.dataValue[key]);
+            }));
+            fetchOptions.body = formData;
         }
 
         // todo: make this work for specific actions, or models
         this._onLoadingStart();
-        const thisPromise = fetch(`/components?${new URLSearchParams(params).toString()}`, fetchOptions);
+        const paramsString = params.toString();
+        const thisPromise = fetch(`${url}${paramsString.length > 0 ? `?${paramsString}` : ''}`, fetchOptions);
         this.renderPromiseStack.addPromise(thisPromise);
         thisPromise.then(async (response) => {
             // if another re-render is scheduled, do not "run it over"
