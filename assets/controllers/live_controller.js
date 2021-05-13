@@ -63,29 +63,6 @@ export default class extends Controller {
 
     $render() {
         this._makeRequest('GET', null);
-        const params = new URLSearchParams({
-            component: this.componentValue,
-            // no "action" here: we are only rendering the model with
-            // the given data
-            data: JSON.stringify(this.dataValue),
-        });
-
-        // todo: make this work for specific actions, or models
-        this._onLoadingStart();
-        const thisPromise = fetch(`/components?${params.toString()}`);
-        this.renderPromiseStack.addPromise(thisPromise);
-        thisPromise.then(async (response) => {
-            // if another re-render is scheduled, do not "run it over"
-            if (this.renderDebounceTimeout) {
-                return;
-            }
-
-            const isMostRecent = this.renderPromiseStack.removePromise(thisPromise);
-            if (isMostRecent) {
-                this._processRerender(await response.json())
-                this._onLoadingFinish();
-            }
-        })
     }
 
     $updateModel(model, value, shouldRender) {
