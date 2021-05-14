@@ -3,6 +3,8 @@ import morphdom from 'morphdom';
 import { parseInstructions } from '../src/instructions';
 import '../styles/live.css';
 
+const DEFAULT_DEBOUNCE = '150';
+
 export default class extends Controller {
     static values = {
         component: String,
@@ -20,6 +22,15 @@ export default class extends Controller {
      * triggers a re-render.
      */
     renderDebounceTimeout = null;
+
+    /**
+     * The current "timeout" that's waiting before an action should
+     * be taken.
+     *
+     * TODO: this timeout should possible be specific to the exact action
+     * being taken so that another quick action taken doesn't clear this.
+     */
+    actionDebounceTimeout = null;
 
     /**
      * A stack of all current AJAX Promises for re-rendering.
@@ -56,9 +67,60 @@ export default class extends Controller {
 
     action(event) {
         // TODO - add validation for this in case it's missing
-        const action = event.currentTarget.dataset.actionName;
+        const rawAction = event.currentTarget.dataset.actionName;
 
-        this._makeRequest('POST', action);
+        // support "prevent.actionName" style of modifiers
+        const actionSections = rawAction.split('.');
+        const action = actionSections[actionSections.length - 1];
+        const modifiers = actionSections.slice(0, actionSections.length - 1);
+
+        // set here so it can be delayed with debouncing below
+        const _executeAction = () => {
+            this._makeRequest('POST', action);
+        }
+
+        let handled = false;
+        modifiers.forEach((modifier) => {
+            // this should always return a single item, so we use [0]
+            const { action: modifierName, args } = parseInstructions(modifier)[0];
+
+            switch (modifierName) {
+                case 'prevent':
+                    event.preventDefault();
+                    break;
+                case 'stop':
+                    event.stopPropagation();
+                    break;
+                case 'self':
+                    if (event.target !== event.currentTarget) {
+                        return;
+                    }
+                    break;
+                case 'debounce':
+                    const length = args[0] ? args[0] : DEFAULT_DEBOUNCE;
+
+                    // clear any pending renders
+                     if (this.actionDebounceTimeout) {
+                         clearTimeout(this.actionDebounceTimeout);
+                         this.actionDebounceTimeout = null;
+                     }
+
+                     this.actionDebounceTimeout = setTimeout(() => {
+                         this.actionDebounceTimeout = null;
+                         _executeAction();
+                     }, length);
+
+                     handled = true;
+
+                     break;
+                default:
+                    console.warn(`Unknown modifier ${modifier} in action ${rawAction}`);
+            }
+        });
+
+        if (!handled) {
+            _executeAction();
+        }
     }
 
     $render() {
@@ -81,7 +143,7 @@ export default class extends Controller {
             this.renderDebounceTimeout = setTimeout(() => {
                 this.renderDebounceTimeout = null;
                 this.$render();
-            }, this.debounceValue || 150);
+            }, this.debounceValue || DEFAULT_DEBOUNCE);
         }
     }
 

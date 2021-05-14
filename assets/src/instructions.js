@@ -2,6 +2,18 @@ const isAlphaNumeric = function(char) {
     return char.match(/^[a-z0-9]+$/i) !== null;
 }
 
+/**
+ * Parses strings like "addClass(foo) removeAttribute(bar)"
+ * into an array of instructions, with this format:
+ *
+ *      [
+ *          { action: 'addClass', args: ['foo'] },
+ *          { action: 'removeAttribute', args: ['bar'] }
+ *      ]
+ *
+ * @param content
+ * @return {[]}
+ */
 export function parseInstructions(content) {
     const instructions = [];
 
