@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 final class EditPost extends LiveComponent
 {
     /**
-     * @LiveProp(readonly=false)
+     * @LiveProp(readonly=true, exposed={"title"})
      */
     public Post $post;
 
