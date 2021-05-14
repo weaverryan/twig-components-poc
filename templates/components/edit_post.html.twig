@@ -11,10 +11,21 @@
     <button
         data-action="live#$render"
     >Refresh</button>
+
     <button
         data-action="live#action"
         data-action-name="save"
     >Save</button>
+
+    <form onsubmit="alert('the form submit was not prevented!')">
+        <button
+            data-action="live#action"
+            data-action-name="prevent.debounce(1000).save"
+        >Save + prevent default + debounce 1000ms</button>
+        <br>
+        (if you click this over and over again, the debounce will
+        prevent it from *ever* running)
+    </form>
     {% if this.isSaved %}
         <h5 style="background-color: cyan">Saved!</h5>
     {% endif %}

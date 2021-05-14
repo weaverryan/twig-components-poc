@@ -30,6 +30,48 @@ not in a block to be part of the "default slot" (like Vue or [Blade Components](
 
 ## Documentation
 
+### Actions 
+
+You can also trigger actions on your component. First, add the method:
+
+TODO: update when the `@LiveAction` exists.
+
+```php
+    public function save(EntityManagerInterface $entityManager)
+    {
+        $this->isSaved = true;
+        $entityManager->flush();
+    }
+```
+
+Actions are true Symfony controllers, so you can autowire services
+like you normally can. To trigger this from your component:
+
+```twig
+<button
+    data-action="live#action"
+    data-action-name="save"
+>Save</button>
+```
+
+That's it! On click, the `save()` action will be triggered and your component
+will be re-rendered.
+
+You can also add several "modifiers" to the event:
+
+```twig
+<form>
+    <button
+        data-action="live#action"
+        data-action-name="prevent.debounce(300).save"
+    >Save</button>
+</form>
+```
+
+The `prevent` modifier will prevent the form from submitting
+(`event.preventDefault()`). The `debounce(300)` modifier will
+add 300ms if "debouncing" before the action is executed.
+
 ### Loading States
 
 Often, you'll want to show (or hide) an element while a component is
