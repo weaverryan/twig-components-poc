@@ -7,6 +7,7 @@ use App\Twig\ComponentHydrator;
 use App\Twig\LiveComponent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -112,10 +113,17 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $response = new JsonResponse([
-            'html' => $component->render($this->twigEnvironment),
-            'data' => $this->hydrator->dehydrate($component),
-        ]);
+        $html = $component->render($this->twigEnvironment);
+
+        if ($request->getPreferredFormat() === 'json') {
+            $response = new JsonResponse([
+                'html' => $html,
+                'data' => $this->hydrator->dehydrate($component),
+            ]);
+        } else {
+            $response = new Response($html);
+        }
+
         $event->setResponse($response);
     }
 

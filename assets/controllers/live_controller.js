@@ -156,7 +156,12 @@ export default class extends Controller {
             params.action = action;
         }
 
-        const fetchOptions = { method };
+        const fetchOptions = {
+            method,
+            headers: {
+                'Accept': 'application/json',
+            },
+        };
         if (method === 'GET') {
             // TODO: we should query params, not JSON here
             params.data = JSON.stringify(this.dataValue);
