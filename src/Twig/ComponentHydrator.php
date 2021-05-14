@@ -104,6 +104,14 @@ final class ComponentHydrator
                 $value = $this->hydrateProperty($property, $data[$name]);
             }
 
+            foreach ($liveProp->exposed() as $exposedProperty) {
+                $propertyPath = "{$name}.$exposedProperty";
+
+                if (\array_key_exists($propertyPath, $data)) {
+                    $this->propertyAccessor->setValue($value, $exposedProperty, $data[$propertyPath]);
+                }
+            }
+
             if ($liveProp->isReadonly()) {
                 // readonly properties uses reflection to set value
                 $property->setAccessible(true);
