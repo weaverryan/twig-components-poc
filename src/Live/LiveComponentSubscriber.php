@@ -37,13 +37,13 @@ class LiveComponentSubscriber implements EventSubscriberInterface
         }
 
         try {
-            $componentServiceId = $this->componentFactory->serviceIdFor((string) $request->query->get('component'));
+            $componentServiceId = $this->componentFactory->serviceIdFor((string) $request->get('component'));
         } catch (\InvalidArgumentException $e) {
             throw new NotFoundHttpException('Component not found.');
         }
 
         // the default "action" is get, which does nothing
-        $action = $request->query->get('action', 'get');
+        $action = $request->get('action', 'get');
 
         $request->attributes->set(
             '_controller',
@@ -64,13 +64,12 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // TODO - we might read the Content-Type header to see if the input
-        // is JSON or form-encoded data
-        if ($request->isMethod('GET')) {
-            $data = \json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
-        } else {
-            $data = \json_decode($request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
-        }
+        // TODO: also allow reading from $request->attributes in case
+        // some data is part of the URL string - see #42
+        $data = array_merge(
+            $request->query->all(),
+            $request->request->all(),
+        );
 
         $controller = $event->getController();
         $component = null;

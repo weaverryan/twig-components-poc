@@ -7,7 +7,7 @@ const DEFAULT_DEBOUNCE = '150';
 
 export default class extends Controller {
     static values = {
-        component: String,
+        url: String,
         data: Object,
         /**
          * The Debounce timeout.
@@ -76,7 +76,7 @@ export default class extends Controller {
 
         // set here so it can be delayed with debouncing below
         const _executeAction = () => {
-            this._makeRequest('POST', action);
+            this._makeRequest(false, action);
         }
 
         let handled = false;
@@ -124,7 +124,7 @@ export default class extends Controller {
     }
 
     $render() {
-        this._makeRequest('GET', null);
+        this._makeRequest(true, null);
     }
 
     $updateModel(model, value, shouldRender) {
@@ -147,31 +147,38 @@ export default class extends Controller {
         }
     }
 
-    _makeRequest(method, action) {
-        const params = {
-            component: this.componentValue,
-        };
+    _makeRequest(allowGetMethod, action) {
+        let [url, queryString] = this.urlValue.split('?');
+        const params = new URLSearchParams(queryString || '');
 
         if (action) {
-            params.action = action;
+            url += `/${encodeURIComponent(action)}`;
         }
 
         const fetchOptions = {
-            method,
             headers: {
                 'Accept': 'application/json',
             },
         };
-        if (method === 'GET') {
-            // TODO: we should query params, not JSON here
-            params.data = JSON.stringify(this.dataValue);
+        if (allowGetMethod && this._willDataFitInUrl()) {
+            Object.keys(this.dataValue).forEach((key => {
+                params.set(key, this.dataValue[key]);
+            }));
+            fetchOptions.method = 'GET';
         } else {
-            fetchOptions.body = JSON.stringify(this.dataValue);
+            const formData = new FormData();
+            // todo - handles files
+            Object.keys(this.dataValue).forEach((key => {
+                formData.append(key, this.dataValue[key]);
+            }));
+            fetchOptions.method = 'POST';
+            fetchOptions.body = formData;
         }
 
         // todo: make this work for specific actions, or models
         this._onLoadingStart();
-        const thisPromise = fetch(`/components?${new URLSearchParams(params).toString()}`, fetchOptions);
+        const paramsString = params.toString();
+        const thisPromise = fetch(`${url}${paramsString.length > 0 ? `?${paramsString}` : ''}`, fetchOptions);
         this.renderPromiseStack.addPromise(thisPromise);
         thisPromise.then(async (response) => {
             // if another re-render is scheduled, do not "run it over"
@@ -312,6 +319,11 @@ export default class extends Controller {
         attributes.forEach((attribute) => {
             element.removeAttribute(attribute);
         })
+    }
+
+    _willDataFitInUrl() {
+        // if the URL gets remotely close to 2000 chars, it may not fit
+        return Object.values(this.dataValue).join(',').length < 1500;
     }
 }
 
