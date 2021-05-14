@@ -3,6 +3,7 @@
 namespace App\Twig\Components;
 
 use App\Entity\Post;
+use App\Twig\Attribute\LiveAction;
 use App\Twig\Attribute\LiveProp;
 use App\Twig\LiveComponent;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,9 @@ final class EditPost extends LiveComponent
      */
     public bool $isSaved = false;
 
+    /**
+     * @LiveAction
+     */
     public function save(EntityManagerInterface $entityManager)
     {
         $this->isSaved = true;

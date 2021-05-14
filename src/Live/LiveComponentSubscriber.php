@@ -82,6 +82,10 @@ class LiveComponentSubscriber implements EventSubscriberInterface
             throw new NotFoundHttpException('this is not a live component!');
         }
 
+        if (!$this->hydrator->isActionAllowed($component, $controller[1] ?? '')) {
+            throw new NotFoundHttpException('invalid action');
+        }
+
         if (!\is_array($data)) {
             throw new NotFoundHttpException('invalid component data');
         }
