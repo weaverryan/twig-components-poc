@@ -76,7 +76,7 @@ export default class extends Controller {
 
         // set here so it can be delayed with debouncing below
         const _executeAction = () => {
-            this._makeRequest('POST', action);
+            this._makeRequest(false, action);
         }
 
         let handled = false;
@@ -124,7 +124,7 @@ export default class extends Controller {
     }
 
     $render() {
-        this._makeRequest('GET', null);
+        this._makeRequest(true, null);
     }
 
     $updateModel(model, value, shouldRender) {
@@ -147,7 +147,7 @@ export default class extends Controller {
         }
     }
 
-    _makeRequest(method, action) {
+    _makeRequest(allowGetMethod, action) {
         let [url, queryString] = this.urlValue.split('?');
         const params = new URLSearchParams(queryString || '');
 
@@ -156,21 +156,22 @@ export default class extends Controller {
         }
 
         const fetchOptions = {
-            method,
             headers: {
                 'Accept': 'application/json',
             },
         };
-        if (method === 'GET') {
+        if (allowGetMethod && this._willDataFitInUrl()) {
             Object.keys(this.dataValue).forEach((key => {
                 params.set(key, this.dataValue[key]);
             }));
+            fetchOptions.method = 'GET';
         } else {
             const formData = new FormData();
             // todo - handles files
             Object.keys(this.dataValue).forEach((key => {
                 formData.append(key, this.dataValue[key]);
             }));
+            fetchOptions.method = 'POST';
             fetchOptions.body = formData;
         }
 
@@ -318,6 +319,11 @@ export default class extends Controller {
         attributes.forEach((attribute) => {
             element.removeAttribute(attribute);
         })
+    }
+
+    _willDataFitInUrl() {
+        // if the URL gets remotely close to 2000 chars, it may not fit
+        return Object.values(this.dataValue).join(',').length < 1500;
     }
 }
 
