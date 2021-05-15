@@ -1,7 +1,8 @@
 import { Controller } from 'stimulus';
 import morphdom from 'morphdom';
-import { parseInstructions } from '../src/instructions';
+import { parseDirectives } from '../src/directives_parser';
 import '../styles/live.css';
+import { combineSpacedArray } from '../src/string_utils';
 
 const DEFAULT_DEBOUNCE = '150';
 
@@ -69,58 +70,55 @@ export default class extends Controller {
         // TODO - add validation for this in case it's missing
         const rawAction = event.currentTarget.dataset.actionName;
 
-        // support "prevent.actionName" style of modifiers
-        const actionSections = rawAction.split('.');
-        const action = actionSections[actionSections.length - 1];
-        const modifiers = actionSections.slice(0, actionSections.length - 1);
+        // data-action-name="prevent.debounce(1000).save"
+        const directives = parseDirectives(rawAction);
 
-        // set here so it can be delayed with debouncing below
-        const _executeAction = () => {
-            this._makeRequest(false, action);
-        }
-
-        let handled = false;
-        modifiers.forEach((modifier) => {
-            // this should always return a single item, so we use [0]
-            const { action: modifierName, args } = parseInstructions(modifier)[0];
-
-            switch (modifierName) {
-                case 'prevent':
-                    event.preventDefault();
-                    break;
-                case 'stop':
-                    event.stopPropagation();
-                    break;
-                case 'self':
-                    if (event.target !== event.currentTarget) {
-                        return;
-                    }
-                    break;
-                case 'debounce':
-                    const length = args[0] ? args[0] : DEFAULT_DEBOUNCE;
-
-                    // clear any pending renders
-                     if (this.actionDebounceTimeout) {
-                         clearTimeout(this.actionDebounceTimeout);
-                         this.actionDebounceTimeout = null;
-                     }
-
-                     this.actionDebounceTimeout = setTimeout(() => {
-                         this.actionDebounceTimeout = null;
-                         _executeAction();
-                     }, length);
-
-                     handled = true;
-
-                     break;
-                default:
-                    console.warn(`Unknown modifier ${modifier} in action ${rawAction}`);
+        directives.forEach((directive) => {
+            // set here so it can be delayed with debouncing below
+            const _executeAction = () => {
+                this._makeRequest(false, directive.action);
             }
-        });
 
-        if (!handled) {
-            _executeAction();
-        }
+            let handled = false;
+            directive.modifiers.forEach((modifier) => {
+                switch (modifier.name) {
+                    case 'prevent':
+                        event.preventDefault();
+                        break;
+                    case 'stop':
+                        event.stopPropagation();
+                        break;
+                    case 'self':
+                        if (event.target !== event.currentTarget) {
+                            return;
+                        }
+                        break;
+                    case 'debounce':
+                        const length = modifier.value ? modifier.value : DEFAULT_DEBOUNCE;
+
+                        // clear any pending renders
+                         if (this.actionDebounceTimeout) {
+                             clearTimeout(this.actionDebounceTimeout);
+                             this.actionDebounceTimeout = null;
+                         }
+
+                         this.actionDebounceTimeout = setTimeout(() => {
+                             this.actionDebounceTimeout = null;
+                             _executeAction();
+                         }, length);
+
+                         handled = true;
+
+                         break;
+                    default:
+                        console.warn(`Unknown modifier ${modifier.name} in action ${rawAction}`);
+                }
+            });
+
+            if (!handled) {
+                _executeAction();
+            }
+        })
     }
 
     $render() {
@@ -221,9 +219,12 @@ export default class extends Controller {
     }
 
     _handleLoadingToggle(isLoading) {
-        this._getLoadingInstructions().forEach(({ element, instructions }) => {
-            instructions.forEach(({action, args}) => {
-                this._handleLoadingInstruction(element, isLoading, action, args)
+        this._getLoadingDirectives().forEach(({ element, directives }) => {
+            // so we can track, at any point, if an element is in a "loading" state
+            element.dataset.liveIsLoading = isLoading;
+
+            directives.forEach((directive) => {
+                this._handleLoadingDirective(element, isLoading, directive)
             });
         });
     }
@@ -231,65 +232,91 @@ export default class extends Controller {
     /**
      * @param {Element} element
      * @param {boolean} isLoading
-     * @param {string} action
-     * @param {Array} args
+     * @param {Directive} directive
      * @private
      */
-    _handleLoadingInstruction(element, isLoading, action, args) {
-        const finalAction = parseLoadingAction(action, isLoading);
+    _handleLoadingDirective(element, isLoading, directive) {
+        const finalAction = parseLoadingAction(directive.action, isLoading);
+
+        let loadingDirective = null;
 
         switch (finalAction) {
             case 'show':
-                // todo error on args
-                this._showElement(element);
+                // todo error on args - e.g. show(foo)
+                loadingDirective = () => {
+                    this._showElement(element)
+                };
                 break;
 
             case 'hide':
                 // todo error on args
-                this._hideElement(element);
+                loadingDirective = () => this._hideElement(element);
                 break;
 
             case 'addClass':
-                this._addClass(element, args);
+                loadingDirective = () => this._addClass(element, directive.args);
                 break;
 
             case 'removeClass':
-                this._removeClass(element, args);
+                loadingDirective = () => this._removeClass(element, directive.args);
                 break;
 
             case 'addAttribute':
-                this._addAttribute(element, args);
+                loadingDirective = () => this._addAttribute(element, directive.args);
                 break;
 
             case 'removeAttribute':
-                this._removeAttribute(element, args);
+                loadingDirective = () => this._removeAttribute(element, directive.args);
                 break;
 
             default:
                 throw new Error(`Unknown data-loading action "${finalAction}"`);
         }
+
+        let isHandled = false;
+        directive.modifiers.forEach((modifier => {
+            switch (modifier.name) {
+                case 'delay':
+                    // if loading has *stopped*, the delay modifier has no effect
+                    if (!isLoading) {
+                        break;
+                    }
+
+                    const delayLength = modifier.value || 200;
+                    setTimeout(() => {
+                        if (element.dataset.liveIsLoading) {
+                            loadingDirective();
+                        }
+                    }, delayLength);
+
+                    isHandled = true;
+
+                    break;
+                default:
+                    throw new Error(`Unknown modifier ${modifier.name} used in the loading directive ${directive.getString()}`)
+            }
+        }));
+
+        // execute the loading directive
+        if(!isHandled) {
+            loadingDirective();
+        }
     }
 
-    _getLoadingInstructions() {
-        const loadingInstructions = [];
+    _getLoadingDirectives() {
+        const loadingDirectives = [];
 
         this.element.querySelectorAll('[data-loading]').forEach((element => {
-            const instructions = parseInstructions(element.dataset.loading, 'show');
-            // make data-loading === data-loading="show"
-            if (instructions.length === 0) {
-                instructions.push({
-                    action: 'show',
-                    args: [],
-                })
-            }
+            // use "show" if the attribute is empty
+            const directives = parseDirectives(element.dataset.loading || 'show');
 
-            loadingInstructions.push({
+            loadingDirectives.push({
                 element,
-                instructions,
+                directives,
             });
         }));
 
-        return loadingInstructions;
+        return loadingDirectives;
     }
 
     _showElement(element) {
@@ -302,11 +329,11 @@ export default class extends Controller {
     }
 
     _addClass(element, classes) {
-        element.classList.add(...classes);
+        element.classList.add(...combineSpacedArray(classes));
     }
 
     _removeClass(element, classes) {
-        element.classList.remove(...classes);
+        element.classList.remove(...combineSpacedArray(classes));
     }
 
     _addAttribute(element, attributes) {
