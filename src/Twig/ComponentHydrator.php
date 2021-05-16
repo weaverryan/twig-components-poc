@@ -2,6 +2,7 @@
 
 namespace App\Twig;
 
+use App\Twig\Attribute\LiveAction;
 use App\Twig\Attribute\LiveProp;
 use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
@@ -27,6 +28,17 @@ final class ComponentHydrator
         $this->propertyAccessor = $propertyAccessor;
         $this->annotationReader = $annotationReader;
         $this->secret = $secret;
+    }
+
+    public function isActionAllowed(LiveComponent $component, string $action): bool
+    {
+        foreach ((new \ReflectionClass($component))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            if ($this->annotationReader->getMethodAnnotation($method, LiveAction::class)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function dehydrate(LiveComponent $component): array
