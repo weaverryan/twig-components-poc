@@ -3,6 +3,8 @@ import morphdom from 'morphdom';
 import { parseDirectives } from '../src/directives_parser';
 import '../styles/live.css';
 import { combineSpacedArray } from '../src/string_utils';
+import { buildFormData, buildSearchParams } from '../src/http_data_helper';
+import { setDeepData } from '../src/set_deep_data';
 
 const DEFAULT_DEBOUNCE = '150';
 
@@ -127,8 +129,19 @@ export default class extends Controller {
 
     $updateModel(model, value, shouldRender) {
         // we do not send old and new data to the server
-        // we merge in the new data now,
-        this.dataValue = { ...this.dataValue, [model]: value}
+        // we merge in the new data now
+        // TODO: handle edge case for top-level of a model with "exposed" props
+        // For example, suppose there is a "post" field but "post.title" is exposed.
+        // If there is a data-model="post", then the "post" data - which was
+        // previously an array with "id" and "title" fields - will now be set
+        // directly to the new post id (e.g. 4). From a saving standpoint,
+        // that is fine: the server sees the "4" and uses it for the post data.
+        // However, there is an edge case where the user changes data-model="post"
+        // and then, for some reason, they don't want an immediate re-render.
+        // Then, then modify the data-model="post.title" field. In theory,
+        // we should be smart enough to convert the post data - which is now
+        // the string "4" - back into an array with [id=4, title=new_title].
+        this.dataValue = setDeepData(this.dataValue, model, value);
 
         if (shouldRender) {
             // clear any pending renders
@@ -159,18 +172,11 @@ export default class extends Controller {
             },
         };
         if (allowGetMethod && this._willDataFitInUrl()) {
-            Object.keys(this.dataValue).forEach((key => {
-                params.set(key, this.dataValue[key]);
-            }));
+            buildSearchParams(params, this.dataValue);
             fetchOptions.method = 'GET';
         } else {
-            const formData = new FormData();
-            // todo - handles files
-            Object.keys(this.dataValue).forEach((key => {
-                formData.append(key, this.dataValue[key]);
-            }));
             fetchOptions.method = 'POST';
-            fetchOptions.body = formData;
+            fetchOptions.body = buildFormData(this.dataValue);
         }
 
         // todo: make this work for specific actions, or models

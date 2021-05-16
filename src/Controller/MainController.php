@@ -23,6 +23,15 @@ class MainController extends AbstractController
             $this->getDoctrine()->getManager()->flush();
         }
 
+        if (!$repo->findOneBy(['slug' => 'sed-faucibus'])) {
+            // a second one, helps with changing the post data
+            $post2 = new Post();
+            $post2->setTitle('Sed faucibus');
+            $post2->setSlug('sed-faucibus');
+            $this->getDoctrine()->getManager()->persist($post2);
+            $this->getDoctrine()->getManager()->flush();
+        }
+
         return $this->render('main/index.html.twig', [
             'controller_name' => 'MainController',
             'post' => $post,

@@ -23,6 +23,14 @@
     {% if post %}
         <h2>PostEdit component</h2>
         {{ component('edit_post', { post: post }) }}
+
+        <h2>ChangeablePostEdit component</h2>
+        <small>
+            Try changing the <code>select</code> to a different post.
+            The component will update, and then you can then change
+            and save a new title.
+        </small>
+        {{ component('changeable_edit_post', { post: post }) }}
     {% endif %}
 
     <h2>Date components</h2>

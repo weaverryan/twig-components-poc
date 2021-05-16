@@ -13,6 +13,7 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 final class ComponentHydrator
 {
     private const CHECKSUM_KEY = '_checksum';
+    private const EXPOSED_PROP_KEY = 'id';
 
     private iterable $propertyHydrators;
     private PropertyAccessorInterface $propertyAccessor;
@@ -54,13 +55,6 @@ final class ComponentHydrator
                 $readonlyProperties[] = $name;
             }
 
-            if ($method = $liveProp->dehydrateMethod()) {
-                // TODO: Error checking
-                $data[$name] = $component->$method();
-
-                continue;
-            }
-
             if ($liveProp->isReadonly()) {
                 // readonly properties uses reflection to get value
                 $property->setAccessible(true);
@@ -72,7 +66,25 @@ final class ComponentHydrator
                 $value = $this->propertyAccessor->getValue($component, $name);
             }
 
-            $data[$name] = $this->dehydrateProperty($value);
+            $dehydratedValue = null;
+            if ($method = $liveProp->dehydrateMethod()) {
+                // TODO: Error checking
+                $dehydratedValue = $component->$method($value);
+            } else {
+                $dehydratedValue = $this->dehydrateProperty($value);
+            }
+
+            if (count($liveProp->exposed()) > 0) {
+                $data[$name] = [
+                    self::EXPOSED_PROP_KEY => $dehydratedValue,
+                ];
+                foreach ($liveProp->exposed() as $propertyPath) {
+                    $value = $this->propertyAccessor->getValue($component, sprintf('%s.%s', $name, $propertyPath));
+                    $data[$name][$propertyPath] = $this->dehydrateProperty($value);
+                }
+            } else {
+                $data[$name] = $dehydratedValue;
+            }
         }
 
         $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $readonlyProperties);
@@ -109,19 +121,36 @@ final class ComponentHydrator
                 continue;
             }
 
+            $dehydratedValue = $data[$name];
+            // if there are exposed keys, then the main value should be hidden
+            // in an array under self::EXPOSED_PROP_KEY. But if the value is
+            // *not* an array, then use the main value. This could mean that,
+            // for example, in a "post.title" situation, the "post" itself was changed.
+            if (count($liveProp->exposed()) > 0 && isset($dehydratedValue[self::EXPOSED_PROP_KEY])) {
+                $dehydratedValue = $dehydratedValue[self::EXPOSED_PROP_KEY];
+                unset($data[$name][self::EXPOSED_PROP_KEY]);
+            }
+
             if ($method = $liveProp->hydrateMethod()) {
                 // TODO: Error checking
-                $value = $component->$method($data[$name]);
+                $value = $component->$method($dehydratedValue);
             } else {
-                $value = $this->hydrateProperty($property, $data[$name]);
+                $value = $this->hydrateProperty($property, $dehydratedValue);
             }
 
             foreach ($liveProp->exposed() as $exposedProperty) {
-                $propertyPath = "{$name}.$exposedProperty";
+                $propertyPath = $this->transformToArrayPath("{$name}.$exposedProperty");
 
-                if (\array_key_exists($propertyPath, $data)) {
-                    $this->propertyAccessor->setValue($value, $exposedProperty, $data[$propertyPath]);
+                if (!$this->propertyAccessor->isReadable($data, $propertyPath)) {
+                    continue;
                 }
+
+                $this->propertyAccessor->setValue(
+                    $value,
+                    $exposedProperty,
+                    // easy way to read off of the array
+                    $this->propertyAccessor->getValue($data, $propertyPath)
+                );
             }
 
             if ($liveProp->isReadonly()) {
@@ -142,22 +171,18 @@ final class ComponentHydrator
         // filter to only readonly properties
         $properties = array_filter($data, static fn($key) => \in_array($key, $readonlyProperties, true), ARRAY_FILTER_USE_KEY);
 
+        // for read-only properties with "exposed" sub-parts,
+        // only use the main value
+        foreach ($properties as $key => $val) {
+            if (\in_array($key, $readonlyProperties) && is_array($val)) {
+                $properties[$key] = $val[self::EXPOSED_PROP_KEY];
+            }
+        }
+
         // sort so it is always consistent (frontend could have re-ordered data)
         \ksort($properties);
 
-        // If $data was sent on a request, at this point, it will always all be strings
-        // So, normalize to string to prevent a different checksum between
-        // a "bool true" (when originally computing) and a string "true" later
-        // TODO: maybe this should be normalized before coming here
-        $properties = array_map(function($value) {
-            if (is_bool($value)) {
-                return $value ? 'true' : 'false';
-            }
-
-            return (string) $value;
-        }, $properties);
-
-        return \base64_encode(\hash_hmac('sha256', \json_encode($properties, \JSON_THROW_ON_ERROR), $this->secret, true));
+        return \base64_encode(\hash_hmac('sha256', http_build_query($properties), $this->secret, true));
     }
 
     private function verifyChecksum(array $data, array $readonlyProperties): void
@@ -246,5 +271,26 @@ final class ComponentHydrator
     private function livePropFor(\ReflectionProperty $property): ?LiveProp
     {
         return $this->annotationReader->getPropertyAnnotation($property, LiveProp::class);
+    }
+
+    /**
+     * Transforms a path like `post.name` into `[post][name]`.
+     *
+     * This allows us to use the property accessor to find this
+     * inside an array.
+     *
+     * @param string $propertyPath
+     * @return string
+     */
+    private function transformToArrayPath(string $propertyPath): string
+    {
+        $parts = explode('.', $propertyPath);
+
+        $path = '';
+        foreach ($parts as $part) {
+            $path .= "[{$part}]";
+        }
+
+        return $path;
     }
 }
