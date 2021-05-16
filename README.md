@@ -80,6 +80,9 @@ re-rendering or an action is processing. For example:
 ```twig
 <!-- show only when the component is loading -->
 <span data-loading>Loading</span>
+
+<!-- equalivalent, longer syntax -->
+<span data-loading="show">Loading</span>
 ```
 
 Or, to *hide* an element while the component is loading:
@@ -120,4 +123,14 @@ with a space:
 
 ```twig
 <div data-loading="addClass(opacity-50) addAttribute(disabled)">...</div>
+```
+
+Finally, you can add the `delay` modifier to not trigger the loading
+changes until loading has taken longer than 200ms:
+
+```twig
+<div data-loading="delay.addClass(opacity-50)">...</div>
+
+<!-- Show after 200ms of loading -->
+<div data-loading="delay.show">Loading</div>
 ```
